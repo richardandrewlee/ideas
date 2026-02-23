@@ -1,15 +1,27 @@
 from pydantic import BaseModel
 from typing import Optional
+from datetime import datetime
+
 
 class EntryBase(BaseModel):
     text: Optional[str] = None
-    category: Optional[str] = "uncategorized"
+    category: str = "uncategorized"
+
 
 class EntryCreate(EntryBase):
     pass
 
-class Entry(EntryBase):
+
+class EntryUpdate(BaseModel):
+    text: Optional[str] = None
+    category: Optional[str] = None
+
+
+class EntryInDB(EntryBase):
     id: str
-    timestamp: str
+    timestamp: datetime
+
+
+class Entry(EntryInDB):
     audio_filename: Optional[str] = None
     transcript: Optional[str] = None
