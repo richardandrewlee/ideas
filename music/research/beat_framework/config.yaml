@@ -1,0 +1,41 @@
+# ============================================================
+# Beat Framework — Configuration
+# ============================================================
+# Copy this file to the project root and fill in your API keys.
+# All sections are optional; the framework degrades gracefully
+# when credentials are missing.
+
+# ── Spotify API ──────────────────────────────────────────────
+# Get free credentials at: https://developer.spotify.com/dashboard
+spotify:
+  client_id:     ""       # e.g. "abc123def456..."
+  client_secret: ""       # e.g. "xyz789..."
+
+# ── Last.fm API ───────────────────────────────────────────────
+# Get free key at: https://www.last.fm/api/account/create
+lastfm:
+  api_key:    ""          # e.g. "abcdef1234567890..."
+  api_secret: ""          # optional
+
+# ── Lakh MIDI Dataset ─────────────────────────────────────────
+# Download from: https://colinraffel.com/projects/lmd/
+# Genre annotations: https://www.tagtraum.com/msd_genre_datasets.html
+lakh:
+  path:               ""  # e.g. "/Users/you/datasets/lmd_full"
+  genre_annotations:  ""  # e.g. "/Users/you/datasets/msd_tagtraum_cd2.cls"
+
+# ── File Paths ────────────────────────────────────────────────
+paths:
+  # GM soundfont for WAV rendering (free options below):
+  #   GeneralUser GS: https://musical-artifacts.com/artifacts/728
+  #   FluidR3:        https://www.zdoom.org/wiki/FluidSynth
+  soundfont:     ""        # e.g. "/Users/you/soundfonts/GeneralUser_GS.sf2"
+  profile_cache: "./profiles"   # Where to cache built genre profiles
+
+# ── Generation Settings ───────────────────────────────────────
+generation:
+  use_magenta: true        # Set false to skip Magenta (faster, simpler setup)
+  seed:        null        # Set an integer for reproducible results, e.g. 42
+
+# ── Logging ───────────────────────────────────────────────────
+verbose: false

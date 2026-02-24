@@ -1,0 +1,10 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(python3:*)"
+    ],
+    "additionalDirectories": [
+      "/Users/richardlee/Documents/GitHub/ideas/music/research/beat_framework"
+    ]
+  }
+}
