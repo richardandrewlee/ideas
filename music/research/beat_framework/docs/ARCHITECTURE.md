@@ -8,17 +8,26 @@
 ## Pipeline Overview
 
 ```
- COLLECT              ANALYZE              GENERATE             EXPORT
- ───────              ───────              ────────             ──────
- Spotify API    ─┐
- Last.fm API    ─┤    MIDI Parser          Statistical     ─┐
- Billboard web  ─┼─→  Drum Extractor  ─→   Generator       ─┼─→  MIDI (.mid)
- Billboard JSON ─┤    Pattern Analyzer     Humanizer       ─┤    WAV  (.wav)
- Lakh MIDI      ─┘         │               Magenta (opt)   ─┘    JSON (.json)
-                           ▼
-                      GenreProfile
-                      (cached to disk)
+ COLLECT              ANALYZE              GENERATE              EXPORT
+ ───────              ───────              ────────              ──────
+ Spotify API    ─┐    MIDI Parser          Statistical Gen  ─┐
+ Last.fm API    ─┤    Drum Extractor       Humanizer        ─┤
+ Billboard web  ─┼─→  Pattern Analyzer     Song Generator   ─┼─→  MIDI (.mid)
+ Billboard JSON ─┤    Key Detector         Bass Generator   ─┤    WAV  (.wav)
+ Lakh MIDI      ─┘    Chord Extractor      Harmony Gen      ─┘    JSON (.json)
+                       Structure Detector   Multi-Instrument
+                       Instrument ID        Arrangement Engine
+                       Song Analyzer
+                            │
+                            ▼
+                    SongDNA + GenreProfile
+                    (cached to disk)
 ```
+
+**Three generation paths:**
+1. `generate()` → beat loops (RawBeat) → `export_all()`
+2. `generate_song()` → full percussion (SongBeat) → `export_song()`
+3. `generate_full_production()` → drums+bass+harmony (FullArrangement) → `export_full_arrangement()`
 
 ---
 
@@ -36,34 +45,46 @@ beat_framework/
 │   ├── aggregator.py             # Merges all collectors, deduplicates
 │   ├── billboard_static.py       # 304 offline songs (NO API key)
 │   ├── billboard_collector.py    # Live Billboard scraper
-│   ├── spotify_collector.py      # Spotify API (BPM, energy, danceability)
+│   ├── spotify_collector.py      # Spotify API (BPM, energy, key, mode, valence, etc.)
 │   ├── lastfm_collector.py       # Last.fm API (genre-tagged tracks)
 │   └── lakh_collector.py         # Lakh MIDI dataset indexer
 │
 ├── analysis/
-│   ├── midi_parser.py            # MIDI reader (mido + pure-Python fallback)
+│   ├── midi_parser.py            # MIDI reader — all events (mido + pure-Python fallback)
 │   ├── drum_extractor.py         # Drum track detection → 32-step grid
-│   └── pattern_analyzer.py       # GenreProfile builder + 6 built-in profiles
+│   ├── pattern_analyzer.py       # GenreProfile builder + 6 built-in profiles
+│   ├── song_dna.py               # SongDNA data model (key, chords, structure, instruments)
+│   ├── key_detector.py           # Krumhansl-Schmuckler key detection
+│   ├── chord_extractor.py        # Chord progression extraction (template matching)
+│   ├── structure_detector.py     # Section detection (self-similarity matrix)
+│   ├── instrument_identifier.py  # MIDI track classification by role
+│   ├── song_analyzer.py          # Orchestrator for all analysis modules
+│   └── section_profile_builder.py # Per-section drum profile scaling
 │
 ├── generators/
 │   ├── statistical_generator.py  # Probability-based beat generation
-│   ├── humanizer.py              # Swing, micro-timing, velocity variation
-│   └── magenta_generator.py      # DrumsRNN continuation (optional)
+│   ├── humanizer.py              # Swing, micro-timing, velocity, section-aware
+│   ├── magenta_generator.py      # DrumsRNN continuation (optional)
+│   ├── arrangement.py            # 12 genre arrangement templates
+│   ├── song_generator.py         # Full song percussion with transitions
+│   ├── bass_generator.py         # Bass line following chord progressions
+│   ├── harmony_generator.py      # Chord voicings (pad, stab, power chord, etc.)
+│   └── multi_instrument_generator.py  # Orchestrates drums + bass + harmony
 │
 ├── exporters/
-│   ├── midi_exporter.py          # Format 1 MIDI, multi-track
+│   ├── midi_exporter.py          # Format 1 MIDI, multi-track, multi-instrument
 │   ├── wav_renderer.py           # FluidSynth rendering
-│   └── json_exporter.py          # JSON for web UIs
+│   └── json_exporter.py          # JSON for web UIs + full arrangements
 │
 ├── data/
 │   ├── billboard_hot100_enriched.json   # 304 songs (curated)
 │   └── billboard_hot100_alltime.json    # Raw source
 │
-├── docs/                         # You are here
+├── docs/
 │   ├── STATUS.md                 # Living status doc (read first)
 │   └── ARCHITECTURE.md           # This file
 │
-└── test_output/                  # 10 generated test files
+└── test_output/
     └── {genre}_{year}_v{nn}_{bpm}bpm.{mid,json}
 ```
 
@@ -79,100 +100,115 @@ Each collector returns a list of song dicts with this shape:
     "artist": str,
     "year": int,
     "genres": list[str],
-    "bpm": float | None,        # Only Spotify + Billboard static
-    "danceability": float | None,  # Only Spotify
-    "energy": float | None,        # Only Spotify
-    "midi_path": str | None,       # Only Lakh
-    "source": str,                 # "spotify" | "lastfm" | "billboard" | "billboard_static" | "lakh"
+    "bpm": float | None,
+    "danceability": float | None,   # Spotify
+    "energy": float | None,         # Spotify
+    "key": int | None,              # Spotify (0-11)
+    "mode": int | None,             # Spotify (0=minor, 1=major)
+    "valence": float | None,        # Spotify
+    "loudness": float | None,       # Spotify
+    "acousticness": float | None,   # Spotify
+    "instrumentalness": float | None, # Spotify
+    "speechiness": float | None,    # Spotify
+    "liveness": float | None,       # Spotify
+    "duration_ms": int | None,      # Spotify
+    "midi_path": str | None,        # Lakh
+    "source": str,
     "rank": int | None,
 }
 ```
 
 ### Aggregator (aggregator.py)
 
-- Priority order: Spotify → Billboard → Last.fm → Lakh
+- Priority order: Spotify → Billboard Static → Billboard → Last.fm → Lakh
 - Deduplication: SequenceMatcher on title+artist (threshold 0.85)
 - Enrichment: merges metadata from richer sources into sparse records
 - Returns unified list sorted by: has BPM → rank → popularity
 
-### Billboard Static (billboard_static.py)
-
-- 304 songs from Billboard Hot 100 All-Time (1942-2021)
-- Genre filtering uses proximity score: genre match + year distance + rank
-- `KNOWN_BPMS` dict has ~110 manually curated BPMs
-- **NOT YET CONNECTED to aggregator** — needs import + call added
-
 ### Collector Comparison
 
-| Collector | API Key | BPM | Offline | Speed | Year Filter |
-|-----------|---------|-----|---------|-------|-------------|
-| Spotify | Required | Yes | No | Fast | Yes |
-| Last.fm | Required | No | No | Medium | No |
-| Billboard web | None | No | No | Slow | Yes |
-| Billboard static | None | Partial | Yes | Instant | Approximate |
-| Lakh MIDI | None | From MIDI | Yes (local) | Fast | Approximate |
+| Collector | API Key | BPM | Key | Offline | Speed |
+|-----------|---------|-----|-----|---------|-------|
+| Spotify | Required | Yes | Yes | No | Fast |
+| Last.fm | Required | No | No | No | Medium |
+| Billboard web | None | No | No | No | Slow |
+| Billboard static | None | Partial | No | Yes | Instant |
+| Lakh MIDI | None | From MIDI | From MIDI | Yes (local) | Fast |
 
 ---
 
 ## Layer 2: Analysis
 
-### MIDI Parser (midi_parser.py)
-
-- Primary: `mido` library
-- Fallback: pure-Python MIDI reader (no dependencies)
-- Returns parsed MIDI with tracks, events, tempo map
-
-### Drum Extractor (drum_extractor.py)
-
-- Identifies drum tracks: MIDI channel 9 or GM drum note range (35-81)
-- Quantizes hits to 32-step grid (2 bars of 16th notes)
-- Extracts up to 4 patterns per MIDI file
-- Output: list of pattern dicts with hits per instrument per step
-
-### Pattern Analyzer (pattern_analyzer.py)
-
-- Aggregates extracted patterns into a GenreProfile
-- Falls back to built-in profiles when data is sparse (<5 patterns)
-- Blends 80% real data / 20% built-in when both available
-
-### GenreProfile (dataclass)
+### SongDNA (song_dna.py) — Central Data Model
 
 ```python
 @dataclass
-class GenreProfile:
-    genre: str
-    year: int
-    num_patterns: int
+class SongDNA:
+    # Identity
+    title, artist, year, genre, source
 
-    # Core: probability of a hit at each of 32 steps, per instrument
-    hit_probability: dict[str, list[float]]   # {"kick": [0.95, 0.05, ...]}
+    # Tempo & Meter
+    bpm: float
+    time_signature: str  # "4/4"
+    tempo_changes: list
 
-    # Velocity distribution per instrument
-    velocity_mean: dict[str, float]           # {"kick": 85}
-    velocity_std: dict[str, float]            # {"kick": 10}
+    # Key & Harmony
+    key: SongKey          # Enum: C, C_SHARP, D, ... B
+    mode: Mode            # Enum: MAJOR, MINOR, DORIAN, MIXOLYDIAN
+    key_confidence: float
+    chord_progression: list[ChordEvent]  # (root, quality, start_bar, confidence)
 
-    # Humanization parameters
-    timing_std: dict[str, float]              # Timing noise in ticks
-    density: dict[str, float]                 # Hit density 0-1
+    # Structure
+    sections: list[SongSection]      # (type, start_bar, end_bar, energy, chords)
+    energy_curve: list[float]        # Per-bar energy 0.0-1.0
 
-    # BPM
-    bpm_mean: float = 120.0
-    bpm_std: float = 5.0
+    # Instruments
+    instruments: list[InstrumentTrack]  # (name, program, channel, role, note_range)
+
+    # Spotify features (optional)
+    spotify_features: dict
+
+    # Serialization
+    save() / load() / to_dict() / from_dict()
 ```
 
-### Built-in Profiles
+### MIDI Parser (midi_parser.py) — Extended
 
-6 hardcoded: `house`, `techno`, `reggae`, `rock`, `hip-hop`, `jazz`
+Now captures ALL MIDI events:
+- `MidiNote`: pitch, velocity, start_tick, duration_ticks, channel
+- `MidiEvent`: key_signature, time_signature, program_change, control_change, marker, set_tempo
+- `MidiTrack`: notes, events, program, channel, name
+- `ParsedMidi`: tracks, key_signature, time_signatures, tempo_map, markers
+- Helpers: `get_all_notes()`, `get_non_drum_notes()`, `tick_to_bar()`
 
-Each defines typical patterns:
-- **House**: 4-on-the-floor kick, off-beat hi-hat, snare on 2 & 4
-- **Techno**: Driving kick, sparse snare, heavy closed hi-hat
-- **Reggae**: One-drop kick (beat 3), cross-stick snare, shuffle hat
-- **Rock**: Kick on 1 & 3, snare on 2 & 4, steady 8th-note hat
-- **Hip-hop**: Syncopated kick, snare on 2 & 4, varied hat patterns
-- **Jazz**: Ride cymbal driven, kick feathering, ghost notes on snare
+### Key Detector (key_detector.py)
 
-**Missing**: blues, metal, drum-and-bass, funk, soul, pop, country, rnb, edm
+- Krumhansl-Kessler major/minor profiles
+- Duration × velocity weighted pitch-class histogram from non-drum notes
+- Correlates against 24 key profiles (12 major + 12 minor)
+- Fuses MIDI detection with Spotify key/mode (boosts confidence when they agree)
+
+### Chord Extractor (chord_extractor.py)
+
+- 13 chord templates: major, minor, dom7, min7, maj7, dim, dim7, aug, sus2, sus4, 5, add9, 6
+- Segments non-drum/non-bass notes into beat-aligned windows
+- Template matching: compare pitch-class sets against all templates × 12 roots
+- Merges consecutive identical chords
+
+### Structure Detector (structure_detector.py)
+
+- Per-bar feature vectors: note density, velocity, instrument count, drum presence
+- Self-similarity matrix comparing 4/8-bar blocks
+- Greedy clustering with similarity threshold 0.6
+- Labels by energy: highest recurring = chorus, lower = verse, unique = bridge
+- Falls back to MIDI markers if present
+
+### Instrument Identifier (instrument_identifier.py)
+
+- Two-pass: first by GM program/channel/name, then by heuristics
+- Bass: median pitch < 48, mostly monophonic
+- Melody: highest varied-pitch track
+- Chords/Pads: polyphonic, mid-register
 
 ---
 
@@ -183,32 +219,76 @@ Each defines typical patterns:
 Input: GenreProfile → Output: RawBeat
 
 1. Sample BPM from N(bpm_mean, bpm_std)
-2. For each bar, for each step, for each instrument:
-   - Roll against `hit_probability[instrument][step]`
-   - If hit: sample velocity from N(velocity_mean, velocity_std)
-   - Apply `variation_factor` for inter-beat differences
-3. Last bar: optional drum fill logic (suppress kick/hat, boost toms/snare)
+2. For each bar/step/instrument: roll against hit_probability
+3. Last bar: optional fill logic (fixed: `_apply_fill_logic` now takes `steps_per_bar` param)
+
+### Arrangement Engine (arrangement.py)
+
+12 built-in genre templates:
+
+| Genre | Structure | Total Bars |
+|-------|-----------|------------|
+| house | intro→verse→breakdown→drop→verse→breakdown→drop→outro | ~64 |
+| techno | intro→build→drop→breakdown→build→drop→outro | ~64 |
+| rock | intro→verse→chorus→verse→chorus→bridge→chorus→outro | ~64 |
+| hip-hop | intro→verse→chorus→verse→chorus→bridge→chorus→outro | ~64 |
+| jazz | intro→head→solo→solo→head→outro | ~64 |
+| reggae | intro→verse→chorus→verse→chorus→verse→chorus→outro | ~64 |
+| pop | intro→verse→prechorus→chorus→verse→prechorus→chorus→bridge→chorus→outro | ~72 |
+
+Each section has: type, bars, energy (0.0-1.0), drum_density, transition_type
+
+### Song Generator (song_generator.py)
+
+- `SongBeat` with list of `SectionBeat` (hits + transition_hits)
+- Section-aware: scales drum density per section
+- Transitions: fills (tom cascade), builds (snare ramp), crash accents
+- Phrase-end fills every 4 bars within sections
+
+### Bass Generator (bass_generator.py)
+
+11 genre rhythm templates:
+
+| Genre | Style | Octave | GM Program |
+|-------|-------|--------|------------|
+| house | root_pump | 2 | 38 (Synth Bass) |
+| techno | driving | 2 | 38 |
+| rock | root_fifth | 2 | 33 (Electric Bass) |
+| hip-hop | syncopated_808 | 1 | 38 |
+| jazz | walking | 2 | 32 (Acoustic Bass) |
+| funk | syncopated | 2 | 36 (Slap Bass) |
+| metal | chugging | 1 | 33 |
+
+Pitch selection: root (75%), fifth (15%), octave (10%). Walking bass uses scale passing tones.
+
+### Harmony Generator (harmony_generator.py)
+
+12 genre voicing styles:
+
+| Genre | Style | Instrument | GM Program |
+|-------|-------|------------|------------|
+| house | pad | synth_pad | 89 (Pad 2) |
+| rock | power_chord | guitar | 29 (Overdriven Guitar) |
+| hip-hop | stab | piano | 0 (Grand Piano) |
+| jazz | extended | piano | 0 |
+| reggae | skank | organ | 16 (Drawbar Organ) |
+| funk | stab | electric_piano | 4 (Electric Piano) |
+| metal | power_chord | guitar | 30 (Distortion Guitar) |
+
+Rhythm patterns per style: pad=whole note, stab=syncopated, skank=off-beat, block=half notes
+
+### Multi-Instrument Generator (multi_instrument_generator.py)
+
+- `FullArrangement`: drums (SongBeat) + bass (BassLine) + harmony (HarmonyPart) + chord progression
+- Orchestrates all generators with shared arrangement template
+- `from_song_dna()`: generate informed by analyzed song DNA
+- Default progressions: I-V-vi-IV (major), i-VI-III-VII (minor)
 
 ### Humanizer (humanizer.py)
 
-Input: RawBeat + GenreProfile → Output: HumanizedBeat
-
-1. **Swing**: Delay odd 16th-note steps by `swing_amount * tick_width`
-2. **Micro-timing**: Gaussian noise per instrument (`timing_std`)
-3. **Velocity accenting**: Beat 1 > 2 > 3 > 4 weighting
-4. **Optional GrooVAE**: Magenta-learned humanization
-
-Genre swing defaults:
-- Jazz: 0.28 | Blues: 0.20 | Hip-hop: 0.15 | Funk: 0.12 | Reggae: 0.08
-- Rock/Pop/House/Techno: 0.00-0.03
-
-**Known bug**: `_apply_fill_logic()` has incorrect `self.steps_per_bar_ref` reference
-
-### Magenta Generator (magenta_generator.py)
-
-- DrumsRNN for creative continuation
-- Requires: `magenta`, `note-seq`, checkpoint files
-- Optional — framework works fully without it
+- `humanize(beat)` — per-beat: swing, micro-timing, velocity accents
+- `humanize_song(song_beat)` — per-section: scales timing/velocity by energy level
+- Genre swing defaults: jazz=0.28, blues=0.20, hip-hop=0.15, funk=0.12
 
 ---
 
@@ -216,77 +296,93 @@ Genre swing defaults:
 
 ### MIDI Exporter (midi_exporter.py)
 
-- Format 1 MIDI (separate track per instrument group)
-- Groups: Kick, Snare, Hi-Hats, Cymbals, Toms, Percussion
-- Channel 10 (GM drum standard)
-- Applies humanized tick offsets
-- Loop support (repeats pattern N times)
-- Fallback: pure-Python MIDI writer
+Three export modes:
+1. **`export(beat)`** — drum loop, Format 1, per-instrument tracks, channel 9
+2. **`export_song(song_beat)`** — full percussion with section markers
+3. **`export_full_arrangement(full)`** — multi-instrument:
+   - Drums: channel 9 (GM standard), grouped by instrument type
+   - Bass: channel 0, with program change
+   - Harmony: channel 1, with program change
+   - Section markers on tempo track
+
+All modes have mido primary + pure-Python fallback.
 
 ### WAV Renderer (wav_renderer.py)
 
 - FluidSynth (CLI or pyfluidsynth bindings)
-- Auto-detects soundfont paths
-- Requires system install + soundfont file
 - Graceful skip if unavailable
 
 ### JSON Exporter (json_exporter.py)
 
-Three export modes:
-- **Beat JSON**: metadata + velocity grid + hit list
-- **Profile JSON**: full GenreProfile for web seeding
-- **Collection JSON**: multiple beats + profiles bundled
+Four export modes:
+1. **Beat JSON**: metadata + velocity grid + hit list
+2. **Song Beat JSON**: sections + drum hits
+3. **Full Arrangement JSON**: sections + chords + drums + bass + harmony
+4. **Collection JSON**: multiple beats bundled
 
 ---
 
 ## Layer 5: CLI (generate.py)
 
-Argparse-based. Key flags:
-
 ```
---genre / -g      Genre (repeatable for multi-genre)
---year / -y       Year
---count / -n      Variations to generate [4]
---bars / -b       Bars per beat [4]
---swing / -s      Swing override [genre default]
---bpm             BPM override
---seed            Random seed
---variation       Inter-beat variation 0-1 [0.15]
---config          Path to config.yaml
---rebuild-profile Force profile rebuild
+Generation modes:
+  --full-song          Full song percussion (3-5 min, sections + transitions)
+  --full-production    Full multi-instrument (drums + bass + harmony)
+  (default)            Beat loops (2-8 bars)
+
+Analysis mode:
+  --analyze MIDI_FILE  Print SongDNA (key, chords, structure, instruments)
+  --analyze-save PATH  Save SongDNA to JSON
+
+Generation options:
+  --genre / -g         Genre (repeatable)
+  --year / -y          Year
+  --count / -n         Variations [4]
+  --bars / -b          Bars per beat [4]
+  --swing / -s         Swing override
+  --bpm                BPM override
+  --seed               Random seed
+  --variation          Inter-beat variation 0-1 [0.15]
+
+Export:
+  --output / -o        Output directory [./output]
+  --no-wav             Skip WAV rendering
+  --no-json            Skip JSON export
+  --multi-track        Format 1 MIDI (default: true)
 ```
 
 ---
 
-## Data Flow Example
+## Data Flow: Full Production
 
 ```
-User runs: python generate.py --genre house --year 2019
+User runs: python generate.py --genre house --year 2019 --full-production
 
-1. CLI parses args → calls framework.quick_generate("house", 2019)
+1. CLI → framework.generate_full_production("house", 2019)
 
-2. framework.build_profile("house", 2019):
-   a. aggregator.get_songs("house", 2019, limit=100)
-      → Spotify returns 80 songs with BPM
-      → Billboard returns 40 songs (some overlap)
-      → Dedup → 95 unique songs
-   b. Find MIDI paths from Lakh-matched songs
-   c. midi_parser.parse() each MIDI
-   d. drum_extractor.extract() → patterns
-   e. pattern_analyzer.analyze(patterns) → GenreProfile
-      (if <5 patterns: blend with built-in house profile)
-   f. Cache profile to disk
+2. build_profile("house", 2019):
+   → aggregator.get_songs() → parse MIDIs → extract drums → GenreProfile
 
-3. framework.generate("house", 2019, count=4):
-   a. statistical_generator.generate_variations(profile, count=4)
-      → 4 RawBeats with different random seeds
-   b. humanizer.humanize(beat, profile) for each
-      → swing=0.02, micro-timing, velocity accents
+3. arrangement_engine.get_template("house"):
+   → intro(8) → verse(16) → breakdown(8) → drop(16) → verse(8) → breakdown(8) → drop(16) → outro(8)
 
-4. framework.export_all(beats, "./output/house_2019"):
-   a. midi_exporter.export(beat) → .mid files
-   b. wav_renderer.render(midi_path) → .wav files (if FluidSynth)
-   c. json_exporter.export(beat) → .json files
+4. multi_instrument_generator.generate():
+   a. Generate default chord progression: C-G-Am-F (I-V-vi-IV)
+   b. song_generator.generate_song(profile, arrangement) → SongBeat (drums)
+   c. bass_generator.generate(chords, arrangement, "house") → BassLine
+   d. harmony_generator.generate(chords, arrangement, "house") → HarmonyPart
+   → FullArrangement with all parts
+
+5. humanizer.humanize_song(drums, profile) → section-aware humanization
+
+6. export_full_arrangement(full, "./output/house_2019"):
+   a. midi_exporter.export_full_arrangement() → multi-track .mid
+      - Tempo track with section markers
+      - Drum tracks (kick, snare, hats, etc.) on ch9
+      - Bass track on ch0 with program change (Synth Bass)
+      - Harmony track on ch1 with program change (Pad)
+   b. json_exporter.export_full_arrangement() → .json
+   c. wav_renderer.render() → .wav (if FluidSynth available)
 ```
 
 ---
@@ -321,3 +417,4 @@ User runs: python generate.py --genre house --year 2019
 - `requests` + `beautifulsoup4` — Billboard scraping
 - `pyfluidsynth` — WAV rendering
 - `magenta` + `note-seq` — ML generation/humanization
+- `pyyaml` — Config file loading

@@ -7,107 +7,124 @@
 
 ## What This Is
 
-A Python framework that generates genre-authentic drum beats by pulling data from
-music sources (Spotify, Billboard, Last.fm, Lakh MIDI), analyzing real drum patterns
-statistically, and outputting MIDI/WAV/JSON files ready for a DAW.
+A Python framework that generates **full multi-instrument song productions** by analyzing
+real music data (Spotify, Billboard, Last.fm, Lakh MIDI), understanding song DNA
+(key, chords, structure, instruments, energy), and producing genre-authentic
+MIDI/WAV/JSON output ready for a DAW.
 
-**The pipeline:** Collect songs → Extract drum patterns → Build genre profile → Generate beats → Export
+**Three generation modes:**
+1. **Beat loops** — 2-8 bar drum patterns (`--genre house --year 2019`)
+2. **Full song percussion** — 3-5 min drum tracks with sections (`--full-song`)
+3. **Full production** — drums + bass + harmony, multi-track (`--full-production`)
 
 ---
 
 ## Where Things Stand
 
-### Done & Working
+### Phase 1: Song DNA Analysis — DONE
+
+- [x] `SongDNA` data model — complete musical fingerprint (key, chords, structure, instruments, energy)
+- [x] Extended MIDI parser — captures all events (key sig, time sig, program change, markers, tempo map, note durations)
+- [x] Key detector — Krumhansl-Schmuckler algorithm, MIDI + Spotify fusion
+- [x] Instrument identifier — classifies MIDI tracks by role (drums, bass, melody, chords)
+- [x] Chord extractor — template matching across 13 chord types, all 12 roots
+- [x] Structure detector — self-similarity matrix, section labeling, energy curves
+- [x] Song analyzer — orchestrates all analysis modules
+- [x] Spotify collector enriched — extracts all audio features (key, mode, valence, etc.)
+- [x] Billboard static wired into aggregator
+- [x] CLI `--analyze` flag to inspect any MIDI file's SongDNA
+
+### Phase 2: Full Song Percussion — DONE
+
+- [x] Humanizer fill bug fixed (`_apply_fill_logic` parameter + operator precedence)
+- [x] Arrangement engine — 12 genre templates with section types, energy, density
+- [x] Section-aware drum profiles — per-section density scaling
+- [x] Full song generator — section-aware drums with fills, builds, transitions
+- [x] Section-aware humanization — timing/velocity scales per section energy
+- [x] MIDI export with section markers
+- [x] JSON export with section data
+- [x] CLI `--full-song` flag
+
+### Phase 3: Multi-Instrument Production — DONE
+
+- [x] Bass line generator — 11 genre rhythm templates, chord-following, walking bass, 808s
+- [x] Harmony generator — 12 genre voicing styles (pad, stab, power chord, skank, extended, block)
+- [x] Multi-instrument orchestrator — shared arrangement + chord progression
+- [x] Multi-track MIDI export — drums ch9, bass ch0, harmony ch1, program changes
+- [x] JSON export for full arrangements
+- [x] CLI `--full-production` flag
+- [x] Framework API: `generate_full_production()`, `export_full_arrangement()`
+
+### Original System — Still Working
 
 - [x] Full 5-layer pipeline: collectors → analysis → generators → exporters → CLI
 - [x] 4 data collectors: Spotify, Last.fm, Billboard scraper, Lakh MIDI
 - [x] Billboard Static collector: 304 all-time hits, genre-classified, ~110 with BPM
-- [x] Statistical beat generator with probability grids per instrument per step
+- [x] Statistical beat generator with probability grids
 - [x] Humanizer: swing, micro-timing, velocity accenting
 - [x] Optional Magenta DrumsRNN continuation + GrooVAE humanization
-- [x] Export: MIDI (Format 1, multi-track), WAV (FluidSynth), JSON (for web UIs)
-- [x] CLI with all the knobs: `--genre`, `--year`, `--bpm`, `--swing`, `--bars`, etc.
+- [x] Export: MIDI (Format 1), WAV (FluidSynth), JSON
 - [x] Offline mode works (Billboard static + built-in profiles, no API keys)
-- [x] 10 test outputs validated: house/techno/reggae/rock/hip-hop (2 each)
 - [x] Profile caching to disk
-- [x] 6 built-in genre profiles: house, techno, reggae, rock, hip-hop, jazz
 
-### Known Bugs
+### Remaining Gaps
 
-- [ ] **Humanizer fill bug** — `_apply_fill_logic()` in `humanizer.py` references
-      `self.steps_per_bar_ref` incorrectly. Drum fills may not apply right.
-
-### Not Yet Wired Up
-
-- [ ] Billboard Static collector exists but **not connected to the aggregator**
-      (aggregator.py doesn't import or call it)
-- [ ] Magenta checkpoints need manual download — no setup script or clear error msgs
-
-### Data Gaps
-
-- [ ] **~220/304 Billboard songs missing BPM** — defaults to 120 BPM (bad for genre accuracy)
-- [ ] Only 6 genres have real built-in profiles — other 9 genres fall back to generic
+- [ ] Magenta checkpoints need manual download — no setup script
+- [ ] ~220/304 Billboard songs missing BPM — defaults to 120
+- [ ] Only 6 genres have real built-in drum profiles — others fall back to generic
 - [ ] Lakh MIDI dataset not tested yet (requires local download of 170k files)
-
----
-
-## Active Priorities
-
-What to work on next, in order of impact:
-
-| #  | Task | Effort | Impact | Status |
-|----|------|--------|--------|--------|
-| 1  | Wire Billboard static into aggregator | Small | High — unlocks offline data | Not started |
-| 2  | Fix humanizer fill bug | Small | Medium — output quality | Not started |
-| 3  | Add genre profiles: jazz, blues, metal, d&b, funk, soul | Medium | High — doubles genre coverage | Not started |
-| 4  | Enrich missing BPMs (Spotify API or bulk lookup) | Medium | High — 220 songs stuck at 120 | Not started |
-| 5  | Pattern visualizer (ASCII grid or terminal UI) | Medium | Medium — debugging + showcase | Not started |
-| 6  | Test with Lakh MIDI dataset | Large | Very high — real drum data | Not started |
-
----
-
-## Backlog (Future)
-
-- Real-time MIDI playback in CLI
-- Drum kit customization (808, acoustic, electronic kits)
-- Pattern quality filtering for extracted MIDI data
-- Batch genre generation from file list
-- A/B comparison tool for profiles across years
-- Progress bars during profile building
-- Web UI for pattern editing (Tone.js + JSON export)
-- Pre-computed genre profiles shipped with the framework
 
 ---
 
 ## Quick Commands
 
 ```bash
-# Generate beats (no API keys)
+# Generate drum loops (no API keys needed)
 python generate.py --genre house --year 2019
 
-# Generate with more options
-python generate.py --genre hip-hop --year 2020 --count 8 --bars 8 --swing 0.15
+# Full song percussion (3-5 min with sections)
+python generate.py --genre house --year 2019 --full-song
 
-# Force a BPM
-python generate.py --genre techno --year 2022 --bpm 138
+# Full multi-instrument production (drums + bass + harmony)
+python generate.py --genre house --year 2019 --full-production
 
-# Rebuild profile from scratch
-python generate.py --genre rock --year 2015 --rebuild-profile
+# Analyze a MIDI file
+python generate.py --genre house --year 2019 --analyze path/to/song.mid
 
-# With full config (API keys, soundfont, etc.)
-python generate.py --genre house --year 2019 --config config.yaml
+# Save analysis
+python generate.py --genre house --year 2019 --analyze song.mid --analyze-save dna.json
+
+# Multiple genres
+python generate.py --genre house --genre rock --genre hip-hop --year 2020
+
+# All the knobs
+python generate.py --genre jazz --year 2010 --count 8 --bars 8 --swing 0.25 --bpm 140 --seed 42
 ```
 
 ---
 
 ## Key Decisions Made
 
-1. **Hybrid approach**: Statistical generation first, Magenta optional — keeps it accessible
-2. **32-step grid**: 2 bars at 16th-note resolution — standard for most genres
-3. **Built-in fallback profiles**: Hardcoded patterns for when MIDI data is sparse (<5 patterns)
-4. **Profile blending**: When real data exists, 80% real / 20% built-in template
-5. **Offline-first**: Billboard static + built-in profiles = full generation without internet
-6. **Format 1 MIDI**: Separate tracks per instrument group (kick, snare, hats, etc.)
+1. **Hybrid approach**: Statistical generation first, Magenta optional
+2. **32-step grid**: 2 bars at 16th-note resolution (standard)
+3. **Built-in fallback profiles**: Hardcoded patterns when MIDI data sparse
+4. **Profile blending**: 80% real / 20% built-in when both available
+5. **Offline-first**: Billboard static + built-in profiles = no internet needed
+6. **Format 1 MIDI**: Separate tracks per instrument group
+7. **Krumhansl-Schmuckler for key detection**: duration×velocity weighted, Spotify tiebreaker
+8. **Self-similarity for structure**: 4/8-bar blocks, greedy clustering, energy labeling
+9. **Chord-following bass**: root (75%), fifth (15%), octave (10%), walking bass for jazz
+10. **GM standard**: channel 9 drums, program changes for bass/harmony instruments
+
+---
+
+## Supported Genres (15)
+
+house, techno, reggae, rock, hip-hop, jazz, pop, metal, soul,
+funk, blues, drum-and-bass, country, rnb, edm
+
+All have arrangement templates. Bass + harmony templates cover 11-12 genres each
+with sensible fallbacks for the rest.
 
 ---
 
@@ -115,4 +132,5 @@ python generate.py --genre house --year 2019 --config config.yaml
 
 _Use this section for quick notes during a work session. Clear between sessions._
 
-- (empty — add notes as you go)
+- All 3 phases complete as of 2026-02-23
+- Next: test full pipeline end-to-end, expand genre profiles, pattern visualizer

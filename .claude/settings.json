@@ -4,7 +4,9 @@
       "Bash(python3:*)"
     ],
     "additionalDirectories": [
-      "/Users/richardlee/Documents/GitHub/ideas/music/research/beat_framework"
+      "/Users/richardlee/Documents/GitHub/ideas/music/research/beat_framework",
+      "/tmp",
+      "/private/tmp"
     ]
   }
 }
