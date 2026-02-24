@@ -1,5 +1,31 @@
 # Billboard Hot 100 All-Time — By Year
 
+> **304 songs** across **50 years** (1942–2021) · **~103 with known BPM**
+> Source: `data/billboard_hot100_enriched.json` + `collectors/billboard_static.py`
+
+---
+
+## Quick Navigation
+
+| Decade | Years |
+|--------|-------|
+| **Pre-1960s** | [1942](#1942) · [1951](#1951) · [1957](#1957) · [1958](#1958) · [1959](#1959) |
+| **1960s** | [1960](#1960) · [1961](#1961) · [1962](#1962) · [1963](#1963) · [1964](#1964) · [1966](#1966) · [1967](#1967) · [1968](#1968) · [1969](#1969) |
+| **1970s** | [1970](#1970) · [1971](#1971) · [1972](#1972) · [1973](#1973) · [1975](#1975) · [1976](#1976) · [1977](#1977) · [1978](#1978) · [1979](#1979) |
+| **1980s** | [1980](#1980) · [1981](#1981) · [1982](#1982) · [1983](#1983) · [1984](#1984) · [1985](#1985) · [1986](#1986) · [1987](#1987) · [1988](#1988) · [1989](#1989) |
+| **1990s** | [1990](#1990) · [1991](#1991) · [1992](#1992) · [1993](#1993) · [1994](#1994) · [1995](#1995) · [1996](#1996) · [1997](#1997) · [1998](#1998) · [1999](#1999) |
+| **2000s** | [2000](#2000) · [2001](#2001) · [2002](#2002) · [2003](#2003) · [2004](#2004) · [2005](#2005) · [2007](#2007) · [2008](#2008) · [2009](#2009) |
+| **2010s** | [2010](#2010) · [2011](#2011) · [2012](#2012) · [2013](#2013) · [2014](#2014) · [2015](#2015) · [2016](#2016) · [2017](#2017) · [2018](#2018) · [2019](#2019) |
+| **2020s** | [2020](#2020) · [2021](#2021) |
+
+### Format
+
+Each year shows:
+1. **Top 7 songs** (numbered, bold) — with Billboard rank, genre, BPM if known
+2. **Remaining songs** (bullet list below divider) — other songs from that year in the Hot 100 All-Time
+
+---
+
 ## 1942
 
 1. **"White Christmas"** — Bing Crosby *(#157, classic-pop)*
@@ -22,23 +48,17 @@
 1. **"Mack the Knife"** — Bobby Darin *(#4, classic-pop)*
 2. **"The Battle of New Orleans"** — Johnny Horton *(#42, classic-pop)*
 3. **"Mr. Blue"** — The Fleetwoods *(#238, classic-pop)*
-
----
-
-- #242 "Lonely Boy" — Paul Anka *(classic-pop)*
-- #299 "The Three Bells" — The Browns *(classic-pop)*
+4. **"Lonely Boy"** — Paul Anka *(#242, classic-pop)*
+5. **"The Three Bells"** — The Browns *(#299, classic-pop)*
 
 ## 1960
 
 1. **"The Twist"** — Chubby Checker *(#2, classic-pop)* [125 BPM]
 2. **"Theme from 'A Summer Place'"** — Percy Faith *(#25, classic-pop)*
 3. **"It's Now or Never"** — Elvis Presley *(#115, classic-pop)*
-
----
-
-- #232 "Cathy's Clown" — The Everly Brothers *(classic-pop)*
-- #290 "Wonderland by Night" — Bert Kaempfert Orchestra *(classic-pop)*
-- #298 "Stuck on You" — Elvis Presley *(classic-pop)*
+4. **"Cathy's Clown"** — The Everly Brothers *(#232, classic-pop)*
+5. **"Wonderland by Night"** — Bert Kaempfert Orchestra *(#290, classic-pop)*
+6. **"Stuck on You"** — Elvis Presley *(#298, classic-pop)*
 
 ## 1961
 
@@ -73,33 +93,24 @@
 1. **"Hey Jude"** — The Beatles *(#13, rock)* [74 BPM]
 2. **"I Heard It Through the Grapevine"** — Marvin Gaye *(#93, rnb)*
 3. **"Honey"** — Bobby Goldsboro *(#247, pop)*
-
----
-
-- #283 "People Got to Be Free" — The Rascals *(pop)*
-- #292 "Love Child" — The Supremes *(funk)*
-- #306 "Everyday People" — Sly & the Family Stone *(funk)*
+4. **"People Got to Be Free"** — The Rascals *(#283, pop)*
+5. **"Love Child"** — The Supremes *(#292, funk)*
+6. **"Everyday People"** — Sly & the Family Stone *(#306, funk)*
 
 ## 1969
 
 1. **"Aquarius/Let the Sunshine In"** — The 5th Dimension *(#81, pop)*
 2. **"Sugar, Sugar"** — The Archies *(#90, funk)* [120 BPM]
 3. **"The First Time Ever I Saw Your Face"** — Roberta Flack *(#148, funk)*
-
----
-
-- #162 "Honky Tonk Women" — The Rolling Stones *(rock)*
-- #305 "In the Year 2525 (Exordium & Terminus)" — Zager & Evans *(pop)*
+4. **"Honky Tonk Women"** — The Rolling Stones *(#162, rock)*
+5. **"In the Year 2525 (Exordium & Terminus)"** — Zager & Evans *(#305, pop)*
 
 ## 1970
 
 1. **"I'll Be There"** — The Jackson 5 *(#221, funk)*
 2. **"Bridge Over Troubled Water"** — Simon & Garfunkel *(#236, rock)* [82 BPM]
 3. **"Knock Three Times"** — Tony Orlando & Dawn *(#237, pop)*
-
----
-
-- #281 "I Think I Love You" — The Partridge Family *(pop)*
+4. **"I Think I Love You"** — The Partridge Family *(#281, pop)*
 
 ## 1971
 
@@ -111,46 +122,37 @@
 1. **"You're So Vain"** — Carly Simon *(#100, pop)*
 2. **"Alone Again (Naturally)"** — Gilbert O'Sullivan *(#145, pop)*
 3. **"Crocodile Rock"** — Elton John *(#172, pop)*
-
----
-
-- #218 "Lean on Me" — Bill Withers *(funk)*
+4. **"Lean on Me"** — Bill Withers *(#218, funk)*
 
 ## 1973
 
 1. **"Let's Get It On"** — Marvin Gaye *(#46, rnb)*
 2. **"Tie a Yellow Ribbon Round the Ole Oak Tree"** — Tony Orlando & Dawn *(#52, pop)*
 3. **"My Love"** — Paul McCartney & Wings *(#142, pop)*
-
----
-
-- #300 "Bad, Bad Leroy Brown" — Jim Croce *(pop)*
-- #304 "Midnight Train to Georgia" — Gladys Knight & the Pips *(funk)*
+4. **"Bad, Bad Leroy Brown"** — Jim Croce *(#300, pop)*
+5. **"Midnight Train to Georgia"** — Gladys Knight & the Pips *(#304, funk)*
 
 ## 1975
 
 1. **"I Write the Songs"** — Barry Manilow *(#192, pop)*
 2. **"Philadelphia Freedom"** — Elton John *(#199, pop)*
 3. **"Island Girl"** — Elton John *(#206, pop)*
-
----
-
-- #209 "That's the Way (I Like It)" — KC & the Sunshine Band *(disco)*
-- #249 "I'm Sorry" — John Denver *(country)*
-- #301 "One of These Nights" — Eagles *(rock)*
+4. **"That's the Way (I Like It)"** — KC & the Sunshine Band *(#209, disco)*
+5. **"I'm Sorry"** — John Denver *(#249, country)*
+6. **"One of These Nights"** — Eagles *(#301, rock)*
 
 ## 1976
 
 1. **"Tonight's the Night (Gonna Be Alright)"** — Rod Stewart *(#21, pop)*
 2. **"Silly Love Songs"** — Paul McCartney & Wings *(#45, pop)*
 3. **"Play That Funky Music"** — Wild Cherry *(#101, funk)* [108 BPM]
+4. **"Don't Go Breaking My Heart"** — Elton John & Kiki Dee *(#113, pop)*
+5. **"A Fifth of Beethoven"** — Walter Murphy & the Big Apple Band *(#128, pop)*
+6. **"Evergreen (Love Theme from A Star Is Born)"** — Barbra Streisand *(#180, pop)*
+7. **"Disco Duck"** — Rick Dees & His Cast of Idiots *(#182, disco)*
 
 ---
 
-- #113 "Don't Go Breaking My Heart" — Elton John & Kiki Dee *(pop)*
-- #128 "A Fifth of Beethoven" — Walter Murphy & the Big Apple Band *(pop)*
-- #180 "Evergreen (Love Theme from A Star Is Born)" — Barbra Streisand *(pop)*
-- #182 "Disco Duck" — Rick Dees & His Cast of Idiots *(disco)*
 - #222 "You Should Be Dancing" — Bee Gees *(disco)*
 - #280 "If You Leave Me Now" — Chicago *(disco)*
 
@@ -159,52 +161,43 @@
 1. **"You Light Up My Life"** — Debby Boone *(#12, pop)*
 2. **"How Deep Is Your Love"** — Bee Gees *(#27, disco)*
 3. **"I Just Want to Be Your Everything"** — Andy Gibb *(#33, pop)*
-
----
-
-- #110 "Stayin' Alive" — Bee Gees *(disco)* [104 BPM]
-- #126 "Hotel California" — Eagles *(rock)* [74 BPM]
-- #227 "Dreams" — Fleetwood Mac *(rock)*
-- #288 "Love Is Thicker Than Water" — Andy Gibb *(pop)*
+4. **"Stayin' Alive"** — Bee Gees *(#110, disco)* [104 BPM]
+5. **"Hotel California"** — Eagles *(#126, rock)* [74 BPM]
+6. **"Dreams"** — Fleetwood Mac *(#227, rock)*
+7. **"Love Is Thicker Than Water"** — Andy Gibb *(#288, pop)*
 
 ## 1978
 
 1. **"Le Freak"** — Chic *(#26, disco)* [120 BPM]
 2. **"Night Fever"** — Bee Gees *(#47, disco)* [110 BPM]
 3. **"Shadow Dancing"** — Andy Gibb *(#55, pop)*
-
----
-
-- #132 "I Will Survive" — Gloria Gaynor *(disco)* [117 BPM]
-- #187 "Da Ya Think I'm Sexy?" — Rod Stewart *(pop)* [116 BPM]
-- #195 "Boogie Oogie Oogie" — A Taste of Honey *(disco)* [126 BPM]
-- #215 "September" — Earth, Wind & Fire *(funk)* [126 BPM]
+4. **"I Will Survive"** — Gloria Gaynor *(#132, disco)* [117 BPM]
+5. **"Da Ya Think I'm Sexy?"** — Rod Stewart *(#187, pop)* [116 BPM]
+6. **"Boogie Oogie Oogie"** — A Taste of Honey *(#195, disco)* [126 BPM]
+7. **"September"** — Earth, Wind & Fire *(#215, funk)* [126 BPM]
 
 ## 1979
 
 1. **"Hot Stuff"** — Donna Summer *(#96, disco)* [120 BPM]
 2. **"Do That to Me One More Time"** — Captain & Tennille *(#127, pop)*
 3. **"Another Brick in the Wall Part II"** — Pink Floyd *(#154, rock)*
-
----
-
-- #161 "Babe" — Styx *(rock)*
-- #205 "My Sharona" — The Knack *(pop)*
-- #208 "Rise" — Herb Alpert *(pop)*
-- #302 "Rock with You" — Michael Jackson *(pop)* [112 BPM]
+4. **"Babe"** — Styx *(#161, rock)*
+5. **"My Sharona"** — The Knack *(#205, pop)*
+6. **"Rise"** — Herb Alpert *(#208, pop)*
+7. **"Rock with You"** — Michael Jackson *(#302, pop)* [112 BPM]
 
 ## 1980
 
 1. **"Another One Bites the Dust"** — Queen *(#48, rock)* [110 BPM]
 2. **"Call Me"** — Blondie *(#64, pop)*
 3. **"Lady"** — Kenny Rogers *(#67, country)*
+4. **"Just Like Starting Over"** — John Lennon *(#76, pop)*
+5. **"Upside Down"** — Diana Ross *(#89, rnb)* [118 BPM]
+6. **"Funkytown"** — Lipps Inc. *(#163, disco)* [127 BPM]
+7. **"Woman in Love"** — Barbra Streisand *(#196, pop)*
 
 ---
 
-- #76 "Just Like Starting Over" — John Lennon *(pop)*
-- #89 "Upside Down" — Diana Ross *(rnb)* [118 BPM]
-- #163 "Funkytown" — Lipps Inc. *(disco)* [127 BPM]
-- #196 "Woman in Love" — Barbra Streisand *(pop)*
 - #248 "Coming Up (Live at Glasgow)" — Paul McCartney & Wings *(pop)*
 
 ## 1981
@@ -212,13 +205,13 @@
 1. **"Physical"** — Olivia Newton-John *(#11, pop)* [124 BPM]
 2. **"Bette Davis Eyes"** — Kim Carnes *(#18, pop)*
 3. **"Endless Love"** — Lionel Richie & Diana Ross *(#20, rnb)*
+4. **"Centerfold"** — J. Geils Band *(#73, rock)*
+5. **"I Love Rock and Roll"** — Joan Jett & the Blackhearts *(#80, rock)* [96 BPM]
+6. **"Tainted Love"** — Soft Cell *(#109, pop)*
+7. **"Waiting for a Girl Like You"** — Foreigner *(#111, rock)*
 
 ---
 
-- #73 "Centerfold" — J. Geils Band *(rock)*
-- #80 "I Love Rock and Roll" — Joan Jett & the Blackhearts *(rock)* [96 BPM]
-- #109 "Tainted Love" — Soft Cell *(pop)*
-- #111 "Waiting for a Girl Like You" — Foreigner *(rock)*
 - #186 "Don't You Want Me?" — The Human League *(pop)*
 - #193 "Jessie's Girl" — Rick Springfield *(rock)*
 - #253 "Arthur's Theme (Best That You Can Do)" — Christopher Cross *(pop)*
@@ -228,35 +221,26 @@
 1. **"Eye of the Tiger"** — Survivor *(#28, rock)* [109 BPM]
 2. **"Ebony and Ivory"** — Paul McCartney & Stevie Wonder *(#85, rnb)*
 3. **"Abracadabra"** — Steve Miller Band *(#99, rock)*
-
----
-
-- #105 "Truly" — Lionel Richie *(rnb)*
-- #141 "Maneater" — Daryl Hall & John Oates *(pop)*
-- #164 "Africa" — Toto *(rock)* [93 BPM]
-- #233 "Jack and Diane" — John Cougar Mellencamp *(pop)* [104 BPM]
+4. **"Truly"** — Lionel Richie *(#105, rnb)*
+5. **"Maneater"** — Daryl Hall & John Oates *(#141, pop)*
+6. **"Africa"** — Toto *(#164, rock)* [93 BPM]
+7. **"Jack and Diane"** — John Cougar Mellencamp *(#233, pop)* [104 BPM]
 
 ## 1983
 
 1. **"Every Breath You Take"** — The Police *(#35, pop)* [118 BPM]
 2. **"Flashdance...What a Feelin'"** — Irene Cara *(#38, pop)*
 3. **"Say Say Say"** — Paul McCartney & Michael Jackson *(#50, pop)*
-
----
-
-- #95 "Billie Jean" — Michael Jackson *(pop)* [117 BPM]
-- #245 "Islands in the Stream" — Kenny Rogers & Dolly Parton *(country)*
-- #287 "Beat It" — Michael Jackson *(pop)* [139 BPM]
+4. **"Billie Jean"** — Michael Jackson *(#95, pop)* [117 BPM]
+5. **"Islands in the Stream"** — Kenny Rogers & Dolly Parton *(#245, country)*
+6. **"Beat It"** — Michael Jackson *(#287, pop)* [139 BPM]
 
 ## 1984
 
 1. **"Like a Virgin"** — Madonna *(#129, pop)* [116 BPM]
 2. **"When Doves Cry"** — Prince *(#131, pop)* [120 BPM]
 3. **"Jump"** — Van Halen *(#234, rock)* [129 BPM]
-
----
-
-- #296 "What's Love Got to Do with It?" — Tina Turner *(pop)*
+4. **"What's Love Got to Do with It?"** — Tina Turner *(#296, pop)*
 
 ## 1985
 
@@ -268,10 +252,7 @@
 1. **"Papa Don't Preach"** — Madonna *(#106, pop)*
 2. **"Word Up!"** — Cameo *(#158, funk)*
 3. **"Glory of Love"** — Peter Cetera *(#169, pop)*
-
----
-
-- #284 "On My Own" — Patti LaBelle & Michael McDonald *(pop)*
+4. **"On My Own"** — Patti LaBelle & Michael McDonald *(#284, pop)*
 
 ## 1987
 
@@ -293,13 +274,13 @@
 1. **"Because I Love You (The Postman Song)"** — Stevie B *(#79, pop)*
 2. **"Nothing Compares 2 U"** — Sinead O'Connor *(#123, pop)*
 3. **"U Can't Touch This"** — MC Hammer *(#156, hip-hop)* [133 BPM]
+4. **"Gonna Make You Sweat (Everybody Dance Now)"** — C + C Music Factory *(#194, disco)*
+5. **"Vogue"** — Madonna *(#204, pop)* [116 BPM]
+6. **"Unchained Melody"** — The Righteous Brothers *(#224, pop)*
+7. **"Hold On"** — Wilson Phillips *(#235, pop)*
 
 ---
 
-- #194 "Gonna Make You Sweat (Everybody Dance Now)" — C + C Music Factory *(disco)*
-- #204 "Vogue" — Madonna *(pop)* [116 BPM]
-- #224 "Unchained Melody" — The Righteous Brothers *(pop)*
-- #235 "Hold On" — Wilson Phillips *(pop)*
 - #282 "Unbelievable" — EMF *(pop)*
 
 ## 1991
@@ -307,12 +288,9 @@
 1. **"(Everything I Do) I Do It for You"** — Bryan Adams *(#23, pop)*
 2. **"Rush Rush"** — Paula Abdul *(#86, pop)*
 3. **"I Wanna Sex You Up"** — Color Me Badd *(#239, rnb)*
-
----
-
-- #241 "One More Try" — Timmy T *(pop)*
-- #285 "The First Time" — Surface *(rnb)*
-- #303 "More Than Words" — Extreme *(pop)*
+4. **"One More Try"** — Timmy T *(#241, pop)*
+5. **"The First Time"** — Surface *(#285, rnb)*
+6. **"More Than Words"** — Extreme *(#303, pop)*
 
 ## 1992
 
@@ -331,11 +309,8 @@
 1. **"I'll Make Love to You"** — Boyz II Men *(#24, rnb)*
 2. **"Creep"** — TLC *(#179, rnb)*
 3. **"Waterfalls"** — TLC *(#188, rnb)*
-
----
-
-- #244 "On Bended Knee" — Boyz II Men *(rnb)*
-- #291 "Take a Bow" — Madonna *(pop)*
+4. **"On Bended Knee"** — Boyz II Men *(#244, rnb)*
+5. **"Take a Bow"** — Madonna *(#291, pop)*
 
 ## 1995
 
@@ -348,24 +323,18 @@
 1. **"Un-Break My Heart"** — Toni Braxton *(#16, rnb)*
 2. **"I Believe I Can Fly"** — R. Kelly *(#121, rnb)*
 3. **"Nobody Knows"** — The Tony Rich Project *(#144, pop)*
-
----
-
-- #166 "Anything" — 3T *(pop)*
-- #250 "You're Makin' Me High / Let It Flow" — Toni Braxton *(rnb)*
+4. **"Anything"** — 3T *(#166, pop)*
+5. **"You're Makin' Me High / Let It Flow"** — Toni Braxton *(#250, rnb)*
 
 ## 1997
 
 1. **"How Do I Live"** — LeAnn Rimes *(#6, pop)*
 2. **"You Were Meant for Me / Foolish Games"** — Jewel *(#22, pop)*
 3. **"Truly, Madly, Deeply"** — Savage Garden *(#44, pop)*
-
----
-
-- #58 "Candle in the Wind 1997" — Elton John *(pop)*
-- #107 "MMMBop" — Hanson *(pop)*
-- #165 "I'll Be Missing You" — P. Diddy & Faith Evans *(pop)*
-- #293 "Can't Nobody Hold Me Down" — Puff Daddy & Mase *(hip-hop)*
+4. **"Candle in the Wind 1997"** — Elton John *(#58, pop)*
+5. **"MMMBop"** — Hanson *(#107, pop)*
+6. **"I'll Be Missing You"** — P. Diddy & Faith Evans *(#165, pop)*
+7. **"Can't Nobody Hold Me Down"** — Puff Daddy & Mase *(#293, hip-hop)*
 
 ## 1998
 
@@ -378,10 +347,7 @@
 1. **"Smooth"** — Santana with Rob Thomas *(#3, pop)* [116 BPM]
 2. **"Heartbreaker"** — Mariah Carey *(#114, rnb)*
 3. **"Breathe"** — Faith Hill *(#159, country)*
-
----
-
-- #210 "Back That Azz Up" — Juvenile with Mannie Fresh & Lil Wayne *(hip-hop)*
+4. **"Back That Azz Up"** — Juvenile with Mannie Fresh & Lil Wayne *(#210, hip-hop)*
 
 ## 2000
 
@@ -394,21 +360,15 @@
 1. **"How You Remind Me"** — Nickelback *(#51, rock)*
 2. **"U Got It Bad"** — Usher *(#134, rnb)*
 3. **"Ride wit Me"** — Nelly *(#170, hip-hop)*
-
----
-
-- #173 "Fiesta (Remix)" — R. Kelly & Jay-Z *(hip-hop, rnb)*
-- #183 "I'm Real" — Jennifer Lopez with Ja Rule *(pop)*
+4. **"Fiesta (Remix)"** — R. Kelly & Jay-Z *(#173, hip-hop, rnb)*
+5. **"I'm Real"** — Jennifer Lopez with Ja Rule *(#183, pop)*
 
 ## 2002
 
 1. **"Dilemma"** — Nelly with Kelly Rowland *(#92, hip-hop)*
 2. **"Lose Yourself"** — Eminem *(#125, hip-hop)* [87 BPM]
 3. **"Foolish"** — Ashanti with Ja Rule *(#140, rnb)*
-
----
-
-- #191 "Hot in Herre" — Nelly *(hip-hop)*
+4. **"Hot in Herre"** — Nelly *(#191, hip-hop)*
 
 ## 2003
 
@@ -419,12 +379,9 @@
 1. **"Yeah!"** — Usher with Lil' Jon & Ludacris *(#17, rnb)* [105 BPM]
 2. **"Let Me Love You"** — Mario *(#65, rnb)*
 3. **"Burn"** — Usher *(#155, rnb)*
-
----
-
-- #174 "Lovers and Friends" — Usher with Lil' Jon & Ludacris *(rnb)*
-- #184 "Goodies" — Ciara with Petey Pablo *(rnb)*
-- #228 "Drop It Like It's Hot" — Snoop Dogg *(hip-hop)*
+4. **"Lovers and Friends"** — Usher with Lil' Jon & Ludacris *(#174, rnb)*
+5. **"Goodies"** — Ciara with Petey Pablo *(#184, rnb)*
+6. **"Drop It Like It's Hot"** — Snoop Dogg *(#228, hip-hop)*
 
 ## 2005
 
@@ -437,12 +394,9 @@
 1. **"Low"** — Flo Rida & T-Pain *(#31, house)* [128 BPM]
 2. **"No One"** — Alicia Keys *(#59, rnb)*
 3. **"Apologize"** — OneRepublic with Timbaland *(#71, pop)*
-
----
-
-- #122 "Umbrella" — Rihanna with Jay-Z *(hip-hop)* [87 BPM]
-- #137 "Bleeding Love" — Leona Lewis *(pop)*
-- #216 "Stronger" — Kanye West *(hip-hop)* [104 BPM]
+4. **"Umbrella"** — Rihanna with Jay-Z *(#122, hip-hop)* [87 BPM]
+5. **"Bleeding Love"** — Leona Lewis *(#137, pop)*
+6. **"Stronger"** — Kanye West *(#216, hip-hop)* [104 BPM]
 
 ## 2008
 
@@ -454,39 +408,33 @@
 1. **"I Gotta Feeling"** — Black Eyed Peas *(#8, house)* [128 BPM]
 2. **"Boom Boom Pow"** — Black Eyed Peas *(#63, house)* [130 BPM]
 3. **"Tik Tok"** — Ke$ha *(#68, pop)* [120 BPM]
-
----
-
-- #136 "Down" — Jay Sean & Lil Wayne *(hip-hop)*
-- #214 "Right Round" — Flo Rida with T-Pain *(house)*
-- #230 "Need You Now" — Lady Antebellum *(country)*
-- #286 "Hey Soul Sister" — Train *(pop)*
+4. **"Down"** — Jay Sean & Lil Wayne *(#136, hip-hop)*
+5. **"Right Round"** — Flo Rida with T-Pain *(#214, house)*
+6. **"Need You Now"** — Lady Antebellum *(#230, country)*
+7. **"Hey Soul Sister"** — Train *(#286, pop)*
 
 ## 2010
 
 1. **"Rolling in the Deep"** — Adele *(#39, pop)* [105 BPM]
 2. **"Just the Way You Are (Amazing)"** — Bruno Mars *(#91, rnb)*
 3. **"Not Afraid"** — Eminem *(#167, hip-hop)*
-
----
-
-- #176 "Forget You" — Cee Lo Green *(pop)*
-- #240 "Love the Way You Lie" — Eminem with Rihanna *(hip-hop)*
-- #252 "California Gurls" — Katy Perry with Snoop Dogg *(hip-hop, pop)* [125 BPM]
-- #257 "Love the Way You Lie" — Eminem *(hip-hop)*
+4. **"Forget You"** — Cee Lo Green *(#176, pop)*
+5. **"Love the Way You Lie"** — Eminem with Rihanna *(#240, hip-hop)*
+6. **"California Gurls"** — Katy Perry with Snoop Dogg *(#252, hip-hop, pop)* [125 BPM]
+7. **"Love the Way You Lie"** — Eminem *(#257, hip-hop)*
 
 ## 2011
 
 1. **"Party Rock Anthem"** — LMFAO with Lauren Bennett & GoonRock *(#7, pop)* [130 BPM]
 2. **"We Found Love"** — Rihanna & Calvin Harris *(#29, house)* [128 BPM]
 3. **"Somebody That I Used to Know"** — Gotye with Kimbra *(#36, pop)*
+4. **"Call Me Maybe"** — Carly Rae Jepsen *(#56, pop)* [120 BPM]
+5. **"Moves Like Jagger"** — Maroon 5 with Christina Aguilera *(#84, pop)* [128 BPM]
+6. **"Sexy and I Know It"** — LMFAO *(#151, pop)*
+7. **"Someone Like You"** — Adele *(#152, pop)*
 
 ---
 
-- #56 "Call Me Maybe" — Carly Rae Jepsen *(pop)* [120 BPM]
-- #84 "Moves Like Jagger" — Maroon 5 with Christina Aguilera *(pop)* [128 BPM]
-- #151 "Sexy and I Know It" — LMFAO *(pop)*
-- #152 "Someone Like You" — Adele *(pop)*
 - #171 "E.T." — Katy Perry with Kanye West *(hip-hop, pop)*
 
 ## 2012
@@ -494,38 +442,32 @@
 1. **"Wild Ones"** — Flo Rida with Sia *(#102, house)*
 2. **"We Are Never Getting Back Together"** — Taylor Swift *(#119, pop)*
 3. **"Radioactive"** — Imagine Dragons *(#150, rock)* [68 BPM]
-
----
-
-- #168 "Cruise" — Nelly *(hip-hop)*
-- #231 "Locked Out of Heaven" — Bruno Mars *(rnb)* [144 BPM]
-- #255 "Cruise" — Florida Georgia Line *(country)*
-- #256 "Thrift Shop" — Macklemore & Ryan Lewis *(pop)* [95 BPM]
+4. **"Cruise"** — Nelly *(#168, hip-hop)*
+5. **"Locked Out of Heaven"** — Bruno Mars *(#231, rnb)* [144 BPM]
+6. **"Cruise"** — Florida Georgia Line *(#255, country)*
+7. **"Thrift Shop"** — Macklemore & Ryan Lewis *(#256, pop)* [95 BPM]
 
 ## 2013
 
 1. **"Blurred Lines"** — Robin Thicke with T.I. & Pharrell *(#57, hip-hop, pop, house)*
 2. **"Royals"** — Lorde *(#77, pop)* [85 BPM]
 3. **"Happy"** — Pharrell Williams *(#88, pop)* [160 BPM]
-
----
-
-- #112 "Roar" — Katy Perry *(pop)*
-- #116 "Dark Horse" — Katy Perry with Juicy J *(pop)*
-- #146 "All of Me" — John Legend *(pop)* [63 BPM]
+4. **"Roar"** — Katy Perry *(#112, pop)*
+5. **"Dark Horse"** — Katy Perry with Juicy J *(#116, pop)*
+6. **"All of Me"** — John Legend *(#146, pop)* [63 BPM]
 
 ## 2014
 
 1. **"Uptown Funk!"** — Mark Ronson with Bruno Mars *(#5, rnb)* [115 BPM]
 2. **"All About That Bass"** — Meghan Trainor *(#74, pop)*
 3. **"Stay with Me"** — Sam Smith *(#108, pop)*
+4. **"Shake It Off"** — Taylor Swift *(#147, pop)* [160 BPM]
+5. **"Sugar"** — Maroon 5 *(#213, pop)*
+6. **"Blank Space"** — Taylor Swift *(#229, pop)*
+7. **"Thinking Out Loud"** — Ed Sheeran *(#243, pop)* [79 BPM]
 
 ---
 
-- #147 "Shake It Off" — Taylor Swift *(pop)* [160 BPM]
-- #213 "Sugar" — Maroon 5 *(pop)*
-- #229 "Blank Space" — Taylor Swift *(pop)*
-- #243 "Thinking Out Loud" — Ed Sheeran *(pop)* [79 BPM]
 - #258 "Problem" — Ariana Grande with Iggy Azalea *(pop)*
 
 ## 2015
@@ -533,13 +475,13 @@
 1. **"See You Again"** — Wiz Khalifa with Charlie Puth *(#103, hip-hop)*
 2. **"The Hills"** — The Weeknd *(#143, rnb)*
 3. **"Trap Queen"** — Fetty Wap *(#197, hip-hop)*
+4. **"Love Yourself"** — Justin Bieber *(#200, pop)*
+5. **"Can't Feel My Face"** — The Weeknd *(#207, rnb)*
+6. **"Hotline Bling"** — Drake *(#220, hip-hop)* [100 BPM]
+7. **"Sorry"** — Justin Bieber *(#246, pop)* [100 BPM]
 
 ---
 
-- #200 "Love Yourself" — Justin Bieber *(pop)*
-- #207 "Can't Feel My Face" — The Weeknd *(rnb)*
-- #220 "Hotline Bling" — Drake *(hip-hop)* [100 BPM]
-- #246 "Sorry" — Justin Bieber *(pop)* [100 BPM]
 - #261 "Tennessee Whiskey" — Chris Stapleton *(country)*
 - #297 "Hello" — Adele *(pop)*
 
@@ -548,50 +490,41 @@
 1. **"Closer"** — The Chainsmokers with Halsey *(#14, pop)* [95 BPM]
 2. **"Starboy"** — The Weeknd with Daft Punk *(#124, rnb)*
 3. **"One Dance"** — Drake *(#149, hip-hop)*
-
----
-
-- #212 "One Dance" — Drake with Wizkid & Kyla *(hip-hop)*
-- #223 "Work" — Rihanna *(pop)*
-- #254 "Can't Stop the Feeling!" — Justin Timberlake *(pop)*
-- #259 "Let Me Love You" — DJ Snake with Justin Bieber *(pop, house)*
+4. **"One Dance"** — Drake with Wizkid & Kyla *(#212, hip-hop)*
+5. **"Work"** — Rihanna *(#223, pop)*
+6. **"Can't Stop the Feeling!"** — Justin Timberlake *(#254, pop)*
+7. **"Let Me Love You"** — DJ Snake with Justin Bieber *(#259, pop, house)*
 
 ## 2017
 
 1. **"Shape of You"** — Ed Sheeran *(#10, pop)* [96 BPM]
 2. **"Girls Like You"** — Maroon 5 with Cardi B *(#30, hip-hop, pop)*
 3. **"Despacito"** — Luis Fonsi with Daddy Yankee *(#37, reggaeton)* [89 BPM]
-
----
-
-- #62 "Perfect" — Ed Sheeran with Beyonce *(pop)*
-- #97 "Rockstar" — Post Malone with 21 Savage *(hip-hop)* [80 BPM]
+4. **"Perfect"** — Ed Sheeran with Beyonce *(#62, pop)*
+5. **"Rockstar"** — Post Malone with 21 Savage *(#97, hip-hop)* [80 BPM]
 
 ## 2018
 
 1. **"Old Town Road"** — Lil Nas X with Billy Ray Cyrus *(#41, hip-hop, country)* [136 BPM]
 2. **"Sunflower"** — Post Malone with Swae Lee *(#75, hip-hop)*
 3. **"God's Plan"** — Drake *(#83, hip-hop)* [77 BPM]
-
----
-
-- #225 "Thank U, Next" — Ariana Grande *(pop)*
-- #226 "I Like It" — Cardi B with Bad Bunny & J Balvin *(hip-hop, reggaeton)*
-- #263 "Without Me" — Halsey *(pop)*
-- #266 "High Hopes" — Panic! at the Disco *(rock)*
+4. **"Thank U, Next"** — Ariana Grande *(#225, pop)*
+5. **"I Like It"** — Cardi B with Bad Bunny & J Balvin *(#226, hip-hop, reggaeton)*
+6. **"Without Me"** — Halsey *(#263, pop)*
+7. **"High Hopes"** — Panic! at the Disco *(#266, rock)*
 
 ## 2019
 
 1. **"Blinding Lights"** — The Weeknd *(#1, rnb)* [171 BPM]
 2. **"Circles"** — Post Malone *(#19, hip-hop)*
 3. **"Watermelon Sugar"** — Harry Styles *(#264, pop)* [95 BPM]
+4. **"Roxanne"** — Arizona Zervas *(#265, hip-hop)*
+5. **"Someone You Loved"** — Lewis Capaldi *(#267, pop)*
+6. **"10,000 Hours"** — Dan + Shay with Justin Bieber *(#268, pop, country)*
+7. **"Truth Hurts"** — Lizzo *(#269, pop)* [124 BPM]
 
 ---
 
-- #265 "Roxanne" — Arizona Zervas *(hip-hop)*
-- #267 "Someone You Loved" — Lewis Capaldi *(pop)*
-- #268 "10,000 Hours" — Dan + Shay with Justin Bieber *(pop, country)*
-- #269 "Truth Hurts" — Lizzo *(pop)* [124 BPM]
 - #271 "Highest in the Room" — Travis Scott *(hip-hop)*
 - #274 "Adore You" — Harry Styles *(pop)*
 
@@ -600,13 +533,13 @@
 1. **"Levitating"** — Dua Lipa with DaBaby *(#32, hip-hop, pop)* [103 BPM]
 2. **"Mood"** — 24K Goldn with Iann Dior *(#49, hip-hop)*
 3. **"Forever After All"** — Luke Combs *(#260, country)*
+4. **"I Hope"** — Gabby Barrett *(#270, country)*
+5. **"Save Your Tears"** — The Weeknd *(#272, rnb)*
+6. **"Dynamite"** — BTS *(#273, k-pop)* [114 BPM]
+7. **"Whats Poppin"** — Jack Harlow *(#275, hip-hop)*
 
 ---
 
-- #270 "I Hope" — Gabby Barrett *(country)*
-- #272 "Save Your Tears" — The Weeknd *(rnb)*
-- #273 "Dynamite" — BTS *(k-pop)* [114 BPM]
-- #275 "Whats Poppin" — Jack Harlow *(hip-hop)*
 - #276 "Savage" — Megan Thee Stallion with Beyonce *(hip-hop)* [90 BPM]
 - #277 "Rockstar" — DaBaby with Roddy Ricch *(hip-hop)* [80 BPM]
 
