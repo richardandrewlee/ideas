@@ -11,9 +11,16 @@ from typing import Optional
 
 import yaml
 
-from .collectors import SpotifyCollector, LastFMCollector, BillboardCollector, LakhCollector, SongAggregator
-from .analysis   import MidiParser, DrumExtractor, PatternAnalyzer
-from .generators import StatisticalGenerator, Humanizer, MagentaGenerator
+from .collectors import (
+    SpotifyCollector, LastFMCollector, BillboardCollector,
+    BillboardStaticCollector, LakhCollector, SongAggregator,
+)
+from .analysis   import MidiParser, DrumExtractor, PatternAnalyzer, SongAnalyzer, SongDNA
+from .generators import (
+    StatisticalGenerator, Humanizer, MagentaGenerator,
+    ArrangementEngine, SongGenerator,
+    BassGenerator, HarmonyGenerator, MultiInstrumentGenerator, FullArrangement,
+)
 from .exporters  import MidiExporter, WavRenderer, JsonExporter
 from .analysis.pattern_analyzer import GenreProfile
 from .generators.statistical_generator import RawBeat
@@ -61,6 +68,7 @@ class BeatFramework:
             lastfm = LastFMCollector(lastfm_api_key, lastfm_api_secret or "")
 
         billboard = BillboardCollector()
+        billboard_static = BillboardStaticCollector()
 
         lakh = None
         if lakh_path:
@@ -70,18 +78,23 @@ class BeatFramework:
             spotify=spotify,
             lastfm=lastfm,
             billboard=billboard,
+            billboard_static=billboard_static,
             lakh=lakh,
         )
 
         # ── Analysis ────────────────────────────────────────────────────────
-        self.parser    = MidiParser()
-        self.extractor = DrumExtractor()
-        self.analyzer  = PatternAnalyzer()
+        self.parser        = MidiParser()
+        self.extractor     = DrumExtractor()
+        self.analyzer      = PatternAnalyzer()
+        self.song_analyzer = SongAnalyzer()
 
         # ── Generation ──────────────────────────────────────────────────────
-        self.stat_gen  = StatisticalGenerator(seed=seed)
-        self.humanizer = Humanizer(seed=seed, use_magenta=use_magenta)
-        self.magenta   = MagentaGenerator() if use_magenta else None
+        self.stat_gen           = StatisticalGenerator(seed=seed)
+        self.humanizer          = Humanizer(seed=seed, use_magenta=use_magenta)
+        self.magenta            = MagentaGenerator() if use_magenta else None
+        self.arrangement_engine = ArrangementEngine()
+        self.song_generator     = SongGenerator(seed=seed)
+        self.multi_gen          = MultiInstrumentGenerator(seed=seed)
 
         # ── Export ──────────────────────────────────────────────────────────
         self.midi_exporter = MidiExporter()
@@ -319,3 +332,206 @@ class BeatFramework:
         """
         beats = self.generate(genre=genre, year=year, count=count, num_bars=num_bars)
         return self.export_all(beats, output_dir, prefix=f"{genre}_{year}_")
+
+    # -----------------------------------------------------------------------
+    # Song Analysis (Phase 1)
+    # -----------------------------------------------------------------------
+
+    def analyze_song(
+        self,
+        midi_path: str,
+        spotify_features: Optional[dict] = None,
+        genre: str = "",
+        title: str = "",
+        artist: str = "",
+    ) -> "SongDNA":
+        """Produce a full SongDNA from a MIDI file and optional Spotify data.
+
+        Returns a SongDNA with key, chords, structure, instruments,
+        energy curve, and drum patterns.
+        """
+        if spotify_features:
+            return self.song_analyzer.analyze_hybrid(midi_path, spotify_features)
+        return self.song_analyzer.analyze_midi(midi_path, genre=genre, title=title, artist=artist)
+
+    def analyze_batch(
+        self,
+        genre: str,
+        year: int,
+        limit: int = 100,
+    ) -> list["SongDNA"]:
+        """Analyze all available songs for a genre/year from collectors.
+
+        Returns a list of SongDNA objects — one per song with MIDI data,
+        plus partial SongDNA (Spotify-only) for songs without MIDI.
+        """
+        songs = self.aggregator.get_songs(genre=genre, year=year, limit=limit)
+        results: list[SongDNA] = []
+
+        for song in songs:
+            try:
+                midi_path = song.get("midi_path")
+                if midi_path:
+                    dna = self.song_analyzer.analyze_hybrid(midi_path, song)
+                else:
+                    dna = self.song_analyzer.analyze_spotify(song)
+                results.append(dna)
+            except Exception as e:
+                logger.debug(f"Analysis failed for {song.get('title', '?')}: {e}")
+
+        logger.info(f"Analyzed {len(results)} songs for {genre}/{year}")
+        return results
+
+    # -----------------------------------------------------------------------
+    # Full Song Generation (Phase 2)
+    # -----------------------------------------------------------------------
+
+    def generate_song(
+        self,
+        genre: str,
+        year: int,
+        template_name: Optional[str] = None,
+        swing: Optional[float] = None,
+        profile: Optional[GenreProfile] = None,
+    ):
+        """Generate a full-song percussion track with sections.
+
+        Returns a SongBeat with section-aware percussion,
+        transitions, fills, builds, and energy dynamics.
+        """
+        if profile is None:
+            profile = self.build_profile(genre, year)
+
+        arrangement = self.arrangement_engine.get_template(genre, template_name)
+
+        song_beat = self.song_generator.generate_song(
+            profile=profile,
+            arrangement=arrangement,
+        )
+
+        # Humanize with section awareness
+        self.humanizer.humanize_song(song_beat, profile, swing=swing)
+
+        logger.info(
+            f"Full song generated: {genre}/{year}, {arrangement.total_bars} bars, "
+            f"{len(song_beat.sections)} sections"
+        )
+        return song_beat
+
+    # -----------------------------------------------------------------------
+    # Full Production (Phase 3)
+    # -----------------------------------------------------------------------
+
+    def generate_full_production(
+        self,
+        genre: str,
+        year: int,
+        template_name: Optional[str] = None,
+        swing: Optional[float] = None,
+        profile: Optional[GenreProfile] = None,
+        include_bass: bool = True,
+        include_harmony: bool = True,
+    ) -> "FullArrangement":
+        """Generate a full multi-instrument song (drums + bass + harmony).
+
+        Returns a FullArrangement with section-aware drums, bass line
+        following chord progression, and genre-appropriate harmony.
+        """
+        if profile is None:
+            profile = self.build_profile(genre, year)
+
+        arrangement = self.arrangement_engine.get_template(genre, template_name)
+
+        full = self.multi_gen.generate(
+            profile=profile,
+            genre=genre,
+            year=year,
+            arrangement=arrangement,
+            include_bass=include_bass,
+            include_harmony=include_harmony,
+        )
+
+        # Humanize the drum tracks
+        if full.drums:
+            self.humanizer.humanize_song(full.drums, profile, swing=swing)
+
+        logger.info(
+            f"Full production generated: {genre}/{year}, {full.total_bars} bars, "
+            f"bass={'yes' if full.bass else 'no'}, harmony={'yes' if full.harmony else 'no'}"
+        )
+        return full
+
+    def export_full_arrangement(
+        self,
+        full_arrangement: "FullArrangement",
+        output_dir: str,
+        prefix: str = "",
+        export_midi: bool = True,
+        export_wav: bool = True,
+        export_json: bool = True,
+    ) -> dict[str, list[str]]:
+        """Export a FullArrangement to multi-track MIDI, WAV, and JSON."""
+        out = Path(output_dir)
+        out.mkdir(parents=True, exist_ok=True)
+
+        outputs: dict[str, list[str]] = {"midi": [], "wav": [], "json": []}
+        name = (
+            f"{prefix}{full_arrangement.genre}_{full_arrangement.year}_"
+            f"{full_arrangement.bpm:.0f}bpm_production"
+        )
+
+        if export_midi:
+            midi_path = str(out / f"{name}.mid")
+            self.midi_exporter.export_full_arrangement(full_arrangement, midi_path)
+            outputs["midi"].append(midi_path)
+
+            if export_wav and self.wav_renderer.available:
+                wav_path = str(out / f"{name}.wav")
+                result = self.wav_renderer.render(midi_path, wav_path)
+                if result:
+                    outputs["wav"].append(result)
+
+        if export_json:
+            json_path = str(out / f"{name}.json")
+            self.json_exporter.export_full_arrangement(full_arrangement, json_path)
+            outputs["json"].append(json_path)
+
+        total = sum(len(v) for v in outputs.values())
+        logger.info(f"Exported {total} full production files to {output_dir}")
+        return outputs
+
+    def export_song(
+        self,
+        song_beat,
+        output_dir: str,
+        prefix: str = "",
+        export_midi: bool = True,
+        export_wav: bool = True,
+        export_json: bool = True,
+    ) -> dict[str, list[str]]:
+        """Export a SongBeat to MIDI, WAV, and JSON."""
+        out = Path(output_dir)
+        out.mkdir(parents=True, exist_ok=True)
+
+        outputs: dict[str, list[str]] = {"midi": [], "wav": [], "json": []}
+        name = f"{prefix}{song_beat.genre}_{song_beat.year}_{song_beat.bpm:.0f}bpm_full"
+
+        if export_midi:
+            midi_path = str(out / f"{name}.mid")
+            self.midi_exporter.export_song(song_beat, midi_path)
+            outputs["midi"].append(midi_path)
+
+            if export_wav and self.wav_renderer.available:
+                wav_path = str(out / f"{name}.wav")
+                result = self.wav_renderer.render(midi_path, wav_path)
+                if result:
+                    outputs["wav"].append(result)
+
+        if export_json:
+            json_path = str(out / f"{name}.json")
+            self.json_exporter.export_song_beat(song_beat, json_path)
+            outputs["json"].append(json_path)
+
+        total = sum(len(v) for v in outputs.values())
+        logger.info(f"Exported {total} song files to {output_dir}")
+        return outputs

@@ -51,12 +51,14 @@ class SongAggregator:
         spotify=None,
         lastfm=None,
         billboard=None,
+        billboard_static=None,
         lakh=None,
     ):
-        self.spotify   = spotify
-        self.lastfm    = lastfm
-        self.billboard = billboard
-        self.lakh      = lakh
+        self.spotify          = spotify
+        self.lastfm           = lastfm
+        self.billboard        = billboard
+        self.billboard_static = billboard_static
+        self.lakh             = lakh
 
     def get_songs(
         self,
@@ -75,10 +77,11 @@ class SongAggregator:
         # Priority order: Spotify (has BPM) → Billboard (year-accurate) →
         #                 Last.fm (genre-accurate) → Lakh (MIDI available)
         sources = [
-            ("spotify",   self.spotify),
-            ("billboard", self.billboard),
-            ("lastfm",    self.lastfm),
-            ("lakh",      self.lakh),
+            ("spotify",          self.spotify),
+            ("billboard",        self.billboard),
+            ("billboard_static", self.billboard_static),
+            ("lastfm",           self.lastfm),
+            ("lakh",             self.lakh),
         ]
 
         for source_name, collector in sources:

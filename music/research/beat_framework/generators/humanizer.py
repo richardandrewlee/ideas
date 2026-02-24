@@ -162,6 +162,49 @@ class Humanizer:
         return int(accent_boost + natural_variation * 0.5)
 
     # -----------------------------------------------------------------------
+    # Full song humanization
+    # -----------------------------------------------------------------------
+
+    def humanize_song(
+        self,
+        song_beat,
+        profile: GenreProfile,
+        swing: Optional[float] = None,
+    ):
+        """Humanize a full SongBeat with section-aware dynamics.
+
+        Scales timing tightness and velocity strength per section energy.
+        Returns the same SongBeat with modified hits.
+        """
+        for section in song_beat.sections:
+            # Scale humanization by section energy
+            timing_strength = 0.5 + section.energy * 0.5
+            velocity_strength = 0.7 + section.energy * 0.3
+
+            # Build a temporary RawBeat for the section
+            temp_beat = RawBeat(
+                genre=song_beat.genre, year=song_beat.year,
+                bpm=song_beat.bpm, hits=section.hits,
+                grid_steps=section.bars * song_beat.steps_per_bar,
+                steps_per_bar=song_beat.steps_per_bar,
+            )
+            self._humanize_statistical(temp_beat, profile, swing, timing_strength, velocity_strength)
+            section.hits = temp_beat.hits
+
+            # Also humanize transition hits
+            if section.transition_hits:
+                trans_beat = RawBeat(
+                    genre=song_beat.genre, year=song_beat.year,
+                    bpm=song_beat.bpm, hits=section.transition_hits,
+                    grid_steps=song_beat.steps_per_bar * 2,
+                    steps_per_bar=song_beat.steps_per_bar,
+                )
+                self._humanize_statistical(trans_beat, profile, swing, 1.0, 1.0)
+                section.transition_hits = trans_beat.hits
+
+        return song_beat
+
+    # -----------------------------------------------------------------------
     # Magenta humanization
     # -----------------------------------------------------------------------
 

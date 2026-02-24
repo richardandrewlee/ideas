@@ -153,3 +153,162 @@ class JsonExporter:
 
         logger.info(f"Collection JSON exported → {output_path} ({len(beats)} beats)")
         return output_path
+
+    def export_song_beat(
+        self,
+        song_beat,
+        output_path: str,
+        pretty: bool = True,
+    ) -> str:
+        """Export a SongBeat (full song) to JSON with section data."""
+        Path(output_path).parent.mkdir(parents=True, exist_ok=True)
+
+        raw = song_beat.to_raw_beat()
+
+        sections_data = []
+        for s in song_beat.sections:
+            sections_data.append({
+                "section_type": s.section_type.value,
+                "start_bar": s.start_bar,
+                "bars": s.bars,
+                "energy": s.energy,
+                "hits": len(s.hits),
+                "transitions": len(s.transition_hits),
+            })
+
+        data = {
+            "meta": {
+                "genre": song_beat.genre,
+                "year": song_beat.year,
+                "bpm": song_beat.bpm,
+                "total_bars": song_beat.total_bars,
+                "total_steps": song_beat.total_steps,
+                "steps_per_bar": song_beat.steps_per_bar,
+                "arrangement": song_beat.arrangement.name,
+                "generated_at": datetime.now().isoformat(),
+            },
+            "sections": sections_data,
+            "hits": [
+                {
+                    "instrument": h.instrument,
+                    "step": h.step,
+                    "midi_note": h.midi_note,
+                    "velocity": h.velocity,
+                    "tick_offset": h.tick_offset,
+                }
+                for h in sorted(raw.hits, key=lambda x: (x.step, x.instrument))
+            ],
+        }
+
+        with open(output_path, "w") as f:
+            json.dump(data, f, indent=2 if pretty else None)
+
+        logger.info(f"Song JSON exported → {output_path}")
+        return output_path
+
+    def export_full_arrangement(
+        self,
+        full_arrangement,
+        output_path: str,
+        pretty: bool = True,
+    ) -> str:
+        """Export a FullArrangement (drums + bass + harmony) to JSON."""
+        Path(output_path).parent.mkdir(parents=True, exist_ok=True)
+
+        # Drum hits
+        drum_hits = []
+        if full_arrangement.drums:
+            raw = full_arrangement.drums.to_raw_beat()
+            drum_hits = [
+                {
+                    "instrument": h.instrument,
+                    "step": h.step,
+                    "midi_note": h.midi_note,
+                    "velocity": h.velocity,
+                    "tick_offset": h.tick_offset,
+                }
+                for h in sorted(raw.hits, key=lambda x: x.step)
+            ]
+
+        # Bass hits
+        bass_hits = []
+        if full_arrangement.bass:
+            bass_hits = [
+                {
+                    "pitch": h.pitch,
+                    "velocity": h.velocity,
+                    "step": h.step,
+                    "duration_steps": h.duration_steps,
+                }
+                for h in sorted(full_arrangement.bass.hits, key=lambda x: x.step)
+            ]
+
+        # Harmony hits
+        harmony_hits = []
+        if full_arrangement.harmony:
+            harmony_hits = [
+                {
+                    "pitches": h.pitches,
+                    "velocity": h.velocity,
+                    "step": h.step,
+                    "duration_steps": h.duration_steps,
+                }
+                for h in sorted(full_arrangement.harmony.hits, key=lambda x: x.step)
+            ]
+
+        # Sections
+        sections_data = []
+        if full_arrangement.arrangement:
+            for s in full_arrangement.arrangement.sections:
+                sections_data.append({
+                    "section_type": s.section_type.value,
+                    "bars": s.bars,
+                    "energy": s.energy,
+                    "drum_density": s.drum_density,
+                })
+
+        # Chord progression
+        chords_data = [
+            {
+                "root": c.root,
+                "quality": c.quality,
+                "name": c.name,
+                "start_bar": c.start_bar,
+            }
+            for c in full_arrangement.chord_progression
+        ]
+
+        data = {
+            "meta": {
+                "genre": full_arrangement.genre,
+                "year": full_arrangement.year,
+                "bpm": full_arrangement.bpm,
+                "key": full_arrangement.key.label if full_arrangement.key else None,
+                "mode": full_arrangement.mode.value if full_arrangement.mode else None,
+                "total_bars": full_arrangement.total_bars,
+                "generated_at": datetime.now().isoformat(),
+            },
+            "arrangement": sections_data,
+            "chord_progression": chords_data,
+            "drums": {
+                "hit_count": len(drum_hits),
+                "hits": drum_hits,
+            },
+            "bass": {
+                "program": full_arrangement.bass.midi_program if full_arrangement.bass else None,
+                "hit_count": len(bass_hits),
+                "hits": bass_hits,
+            },
+            "harmony": {
+                "program": full_arrangement.harmony.midi_program if full_arrangement.harmony else None,
+                "instrument": full_arrangement.harmony.instrument_name if full_arrangement.harmony else None,
+                "hit_count": len(harmony_hits),
+                "hits": harmony_hits,
+            },
+        }
+
+        with open(output_path, "w") as f:
+            json.dump(data, f, indent=2 if pretty else None)
+
+        logger.info(f"Full arrangement JSON exported → {output_path}")
+        return output_path

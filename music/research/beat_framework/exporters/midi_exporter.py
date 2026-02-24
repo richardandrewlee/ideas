@@ -212,6 +212,293 @@ class MidiExporter:
             value >>= 7
         return bytes(result)
 
+    def export_song(
+        self,
+        song_beat,
+        output_path: str,
+        loop_count: int = 1,
+    ) -> str:
+        """Export a SongBeat (full-song percussion) to MIDI with section markers.
+
+        Converts the SongBeat to a RawBeat and exports with markers.
+        """
+        raw = song_beat.to_raw_beat()
+        Path(output_path).parent.mkdir(parents=True, exist_ok=True)
+
+        try:
+            import mido
+            self._export_song_mido(song_beat, raw, output_path)
+        except ImportError:
+            # Fallback: export as plain MIDI without markers
+            self.export(raw, output_path, multi_track=True, loop_count=loop_count)
+
+        logger.info(f"Song MIDI exported → {output_path} ({song_beat.total_bars} bars)")
+        return output_path
+
+    def _export_song_mido(self, song_beat, raw_beat: RawBeat, path: str) -> None:
+        """Export with mido, adding section markers."""
+        import mido
+
+        tpb = raw_beat.ticks_per_beat
+        tempo = int(60_000_000 / raw_beat.bpm)
+        tps = raw_beat.ticks_per_step
+
+        mid = mido.MidiFile(type=1, ticks_per_beat=tpb)
+
+        # Tempo track with markers
+        tempo_track = mido.MidiTrack()
+        tempo_track.append(mido.MetaMessage("set_tempo", tempo=tempo, time=0))
+        tempo_track.append(mido.MetaMessage("time_signature", numerator=4, denominator=4, time=0))
+
+        # Add section markers
+        marker_events = []
+        for section in song_beat.sections:
+            tick = int(section.start_bar * song_beat.steps_per_bar * tps)
+            label = f"{section.section_type.value} (energy={section.energy:.1f})"
+            marker_events.append((tick, label))
+
+        marker_events.sort(key=lambda e: e[0])
+        prev_tick = 0
+        for tick, label in marker_events:
+            delta = max(0, tick - prev_tick)
+            prev_tick = tick
+            tempo_track.append(mido.MetaMessage("marker", text=label, time=delta))
+
+        tempo_track.append(mido.MetaMessage("end_of_track", time=0))
+        mid.tracks.append(tempo_track)
+
+        # Instrument tracks
+        all_hits = list(raw_beat.hits)
+        for group_name, instruments in TRACK_GROUPS.items():
+            group_hits = [h for h in all_hits if h.instrument in instruments]
+            if not group_hits:
+                continue
+            track = mido.MidiTrack()
+            track.name = group_name
+            track.append(mido.MetaMessage("track_name", name=group_name, time=0))
+            self._hits_to_mido_track(track, group_hits, raw_beat, tempo)
+            mid.tracks.append(track)
+
+        mid.save(path)
+
+    def export_full_arrangement(
+        self,
+        full_arrangement,
+        output_path: str,
+    ) -> str:
+        """Export a FullArrangement (drums + bass + harmony) to multi-track MIDI.
+
+        Drums on channel 9 (GM standard), bass on channel 0, harmony on channel 1.
+        Each instrument gets its own track with program change messages.
+        """
+        Path(output_path).parent.mkdir(parents=True, exist_ok=True)
+
+        try:
+            import mido
+            self._export_full_mido(full_arrangement, output_path)
+        except ImportError:
+            self._export_full_builtin(full_arrangement, output_path)
+
+        total_notes = 0
+        if full_arrangement.drums:
+            total_notes += sum(len(s.hits) for s in full_arrangement.drums.sections)
+        if full_arrangement.bass:
+            total_notes += len(full_arrangement.bass.hits)
+        if full_arrangement.harmony:
+            total_notes += len(full_arrangement.harmony.hits)
+        logger.info(
+            f"Full arrangement MIDI exported → {output_path} "
+            f"({full_arrangement.total_bars} bars, {total_notes} notes)"
+        )
+        return output_path
+
+    def _export_full_mido(self, arrangement, path: str) -> None:
+        """Export full arrangement with mido: drums + bass + harmony tracks."""
+        import mido
+
+        bpm = arrangement.bpm
+        tpb = 480
+        tempo = int(60_000_000 / bpm)
+        steps_per_bar = 16
+        tps = tpb // 4  # ticks per 16th note step
+
+        mid = mido.MidiFile(type=1, ticks_per_beat=tpb)
+
+        # Tempo track with section markers
+        tempo_track = mido.MidiTrack()
+        tempo_track.append(mido.MetaMessage("set_tempo", tempo=tempo, time=0))
+        tempo_track.append(mido.MetaMessage("time_signature", numerator=4, denominator=4, time=0))
+
+        if arrangement.arrangement:
+            marker_events = []
+            current_bar = 0
+            for section in arrangement.arrangement.sections:
+                tick = int(current_bar * steps_per_bar * tps)
+                label = f"{section.section_type.value} (energy={section.energy:.1f})"
+                marker_events.append((tick, label))
+                current_bar += section.bars
+
+            marker_events.sort(key=lambda e: e[0])
+            prev_tick = 0
+            for tick, label in marker_events:
+                delta = max(0, tick - prev_tick)
+                prev_tick = tick
+                tempo_track.append(mido.MetaMessage("marker", text=label, time=delta))
+
+        tempo_track.append(mido.MetaMessage("end_of_track", time=0))
+        mid.tracks.append(tempo_track)
+
+        # Drum tracks (channel 9)
+        if arrangement.drums:
+            raw = arrangement.drums.to_raw_beat()
+            all_hits = list(raw.hits)
+            for group_name, instruments in TRACK_GROUPS.items():
+                group_hits = [h for h in all_hits if h.instrument in instruments]
+                if not group_hits:
+                    continue
+                track = mido.MidiTrack()
+                track.name = group_name
+                track.append(mido.MetaMessage("track_name", name=group_name, time=0))
+                self._hits_to_mido_track(track, group_hits, raw, tempo)
+                mid.tracks.append(track)
+
+        # Bass track (channel 0)
+        BASS_CHANNEL = 0
+        if arrangement.bass and arrangement.bass.hits:
+            bass_track = mido.MidiTrack()
+            bass_track.name = "Bass"
+            bass_track.append(mido.MetaMessage("track_name", name="Bass", time=0))
+            bass_track.append(mido.Message(
+                "program_change", channel=BASS_CHANNEL,
+                program=arrangement.bass.midi_program, time=0
+            ))
+
+            events = []
+            for hit in arrangement.bass.hits:
+                abs_tick = int(hit.step * tps + hit.tick_offset)
+                abs_tick = max(0, abs_tick)
+                dur_ticks = max(1, int(hit.duration_steps * tps))
+                events.append((abs_tick, "note_on", hit.pitch, hit.velocity))
+                events.append((abs_tick + dur_ticks, "note_off", hit.pitch, 0))
+
+            events.sort(key=lambda e: (e[0], 0 if e[1] == "note_off" else 1))
+
+            prev_tick = 0
+            for abs_tick, msg_type, note, vel in events:
+                delta = max(0, abs_tick - prev_tick)
+                prev_tick = abs_tick
+                if msg_type == "note_on":
+                    bass_track.append(mido.Message(
+                        "note_on", channel=BASS_CHANNEL, note=note, velocity=vel, time=delta
+                    ))
+                else:
+                    bass_track.append(mido.Message(
+                        "note_off", channel=BASS_CHANNEL, note=note, velocity=0, time=delta
+                    ))
+
+            bass_track.append(mido.MetaMessage("end_of_track", time=0))
+            mid.tracks.append(bass_track)
+
+        # Harmony track (channel 1)
+        HARMONY_CHANNEL = 1
+        if arrangement.harmony and arrangement.harmony.hits:
+            harmony_track = mido.MidiTrack()
+            harmony_track.name = arrangement.harmony.instrument_name or "Harmony"
+            harmony_track.append(mido.MetaMessage(
+                "track_name", name=harmony_track.name, time=0
+            ))
+            harmony_track.append(mido.Message(
+                "program_change", channel=HARMONY_CHANNEL,
+                program=arrangement.harmony.midi_program, time=0
+            ))
+
+            events = []
+            for hit in arrangement.harmony.hits:
+                abs_tick = int(hit.step * tps + hit.tick_offset)
+                abs_tick = max(0, abs_tick)
+                dur_ticks = max(1, int(hit.duration_steps * tps))
+                for pitch in hit.pitches:
+                    events.append((abs_tick, "note_on", pitch, hit.velocity))
+                    events.append((abs_tick + dur_ticks, "note_off", pitch, 0))
+
+            events.sort(key=lambda e: (e[0], 0 if e[1] == "note_off" else 1))
+
+            prev_tick = 0
+            for abs_tick, msg_type, note, vel in events:
+                delta = max(0, abs_tick - prev_tick)
+                prev_tick = abs_tick
+                if msg_type == "note_on":
+                    harmony_track.append(mido.Message(
+                        "note_on", channel=HARMONY_CHANNEL, note=note, velocity=vel, time=delta
+                    ))
+                else:
+                    harmony_track.append(mido.Message(
+                        "note_off", channel=HARMONY_CHANNEL, note=note, velocity=0, time=delta
+                    ))
+
+            harmony_track.append(mido.MetaMessage("end_of_track", time=0))
+            mid.tracks.append(harmony_track)
+
+        mid.save(path)
+
+    def _export_full_builtin(self, arrangement, path: str) -> None:
+        """Fallback: export full arrangement using pure-Python writer."""
+        tpb = 480
+        tempo = int(60_000_000 / arrangement.bpm)
+        tps = tpb // 4
+
+        events = []
+
+        # Drum events (channel 9)
+        if arrangement.drums:
+            raw = arrangement.drums.to_raw_beat()
+            for hit in raw.hits:
+                abs_tick = int(hit.step * tps + hit.tick_offset)
+                abs_tick = max(0, abs_tick)
+                events.append((abs_tick,     0x99, hit.midi_note, hit.velocity))
+                events.append((abs_tick + 1, 0x89, hit.midi_note, 0))
+
+        # Bass events (channel 0)
+        if arrangement.bass:
+            for hit in arrangement.bass.hits:
+                abs_tick = int(hit.step * tps + hit.tick_offset)
+                abs_tick = max(0, abs_tick)
+                dur_ticks = max(1, int(hit.duration_steps * tps))
+                events.append((abs_tick, 0x90, hit.pitch, hit.velocity))
+                events.append((abs_tick + dur_ticks, 0x80, hit.pitch, 0))
+
+        # Harmony events (channel 1)
+        if arrangement.harmony:
+            for hit in arrangement.harmony.hits:
+                abs_tick = int(hit.step * tps + hit.tick_offset)
+                abs_tick = max(0, abs_tick)
+                dur_ticks = max(1, int(hit.duration_steps * tps))
+                for pitch in hit.pitches:
+                    events.append((abs_tick, 0x91, pitch, hit.velocity))
+                    events.append((abs_tick + dur_ticks, 0x81, pitch, 0))
+
+        events.sort(key=lambda e: e[0])
+
+        # Build track bytes
+        track_bytes = bytearray()
+        track_bytes += self._meta_event(0, 0x51, struct.pack(">I", tempo)[1:])
+        track_bytes += self._meta_event(0, 0x58, bytes([4, 2, 24, 8]))
+
+        prev_tick = 0
+        for abs_tick, status, note, vel in events:
+            delta = max(0, abs_tick - prev_tick)
+            prev_tick = abs_tick
+            track_bytes += self._varlen(delta)
+            track_bytes += bytes([status, note, vel])
+
+        track_bytes += self._meta_event(0, 0x2F, b"")
+
+        header = b"MThd" + struct.pack(">IHHH", 6, 0, 1, tpb)
+        track_chunk = b"MTrk" + struct.pack(">I", len(track_bytes)) + bytes(track_bytes)
+
+        with open(path, "wb") as f:
+            f.write(header + track_chunk)
+
     @staticmethod
     def _meta_event(delta: int, meta_type: int, data: bytes) -> bytes:
         def varlen(v):

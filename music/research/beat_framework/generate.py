@@ -68,6 +68,8 @@ def main():
     parser.add_argument("--variation",    type=float, default=0.15, help="Variation factor 0–1 (default: 0.15)")
     parser.add_argument("--no-magenta",   action="store_true",      help="Disable Magenta (faster, pure statistical)")
     parser.add_argument("--magenta-continuation", action="store_true", help="Add a Magenta DrumsRNN continuation beat")
+    parser.add_argument("--full-song",   action="store_true",      help="Generate full-song percussion (3-5 min) with sections")
+    parser.add_argument("--full-production", action="store_true",  help="Generate full multi-instrument song (drums + bass + harmony)")
 
     # Export settings
     parser.add_argument("--output",  "-o", default="./output", help="Output directory (default: ./output)")
@@ -80,6 +82,12 @@ def main():
     parser.add_argument("--rebuild-profile", action="store_true", help="Ignore profile cache and rebuild")
     parser.add_argument("--profile-cache",  default="./profiles", help="Profile cache directory")
     parser.add_argument("--soundfont",      default=None,         help="Path to GM soundfont (.sf2)")
+
+    # Analysis mode
+    parser.add_argument("--analyze",       default=None, metavar="MIDI_FILE",
+                        help="Analyze a MIDI file and print its SongDNA (key, chords, structure, instruments)")
+    parser.add_argument("--analyze-save",  default=None, metavar="PATH",
+                        help="Save SongDNA to JSON file (used with --analyze)")
 
     parser.add_argument("--verbose", "-v", action="store_true", help="Verbose logging")
 
@@ -119,6 +127,50 @@ def main():
             verbose=args.verbose,
         )
 
+    # ── Analyze mode ───────────────────────────────────────────────────
+    if args.analyze:
+        midi_file = args.analyze
+        if not Path(midi_file).exists():
+            logger.error(f"MIDI file not found: {midi_file}")
+            return 1
+
+        logger.info(f"Analyzing: {midi_file}")
+        dna = fw.analyze_song(midi_file, genre=args.genres[0] if args.genres else "")
+
+        # Print analysis
+        print(f"\n{'='*60}")
+        print(f"  SONG DNA: {dna.title or Path(midi_file).stem}")
+        print(f"{'='*60}")
+        print(f"  Key:            {dna.key_name} (confidence: {dna.key_confidence:.0%})")
+        print(f"  BPM:            {dna.bpm:.1f}")
+        print(f"  Time Signature: {dna.time_signature}")
+        print(f"  Total Bars:     {dna.total_bars}")
+        if dna.instruments:
+            names = [i.name for i in dna.instruments]
+            print(f"  Instruments:    {', '.join(names)}")
+        if dna.chord_progression:
+            chords = [c.name for c in dna.chord_progression[:16]]
+            print(f"  Chords:         {' | '.join(chords)}")
+            if len(dna.chord_progression) > 16:
+                print(f"                  ... and {len(dna.chord_progression) - 16} more")
+        if dna.sections:
+            print(f"  Structure:      {dna.section_summary}")
+            for s in dna.sections:
+                print(f"    {s.label:20s}  bars {s.start_bar:3d}-{s.end_bar:3d}  energy={s.energy_level:.2f}")
+        if dna.energy_curve:
+            # Simple ASCII energy visualization
+            bars_to_show = min(len(dna.energy_curve), 64)
+            bar_chars = "".join("▁▂▃▄▅▆▇█"[min(7, int(e * 8))] for e in dna.energy_curve[:bars_to_show])
+            print(f"  Energy Curve:   {bar_chars}")
+        print()
+
+        # Save if requested
+        if args.analyze_save:
+            dna.save(args.analyze_save)
+            logger.info(f"SongDNA saved to: {args.analyze_save}")
+
+        return 0
+
     # ── Generate for each genre ──────────────────────────────────────────
     all_outputs: dict[str, list[str]] = {"midi": [], "wav": [], "json": []}
 
@@ -144,6 +196,57 @@ def main():
             f"Profile: {profile.num_patterns} patterns, "
             f"BPM {profile.bpm_mean:.1f} ± {profile.bpm_std:.1f}"
         )
+
+        # Full multi-instrument production mode
+        if args.full_production:
+            full = fw.generate_full_production(
+                genre=genre,
+                year=args.year,
+                swing=args.swing,
+                profile=profile,
+            )
+            logger.info(
+                f"Generated full production: {full.total_bars} bars, "
+                f"key={full.key.label if full.key else '?'} {full.mode.value if full.mode else '?'}"
+            )
+
+            output_dir = str(Path(args.output) / f"{genre}_{args.year}")
+            outputs = fw.export_full_arrangement(
+                full_arrangement=full,
+                output_dir=output_dir,
+                prefix=f"{genre}_{args.year}_",
+                export_midi=True,
+                export_wav=not args.no_wav,
+                export_json=not args.no_json,
+            )
+
+            for fmt, paths in outputs.items():
+                all_outputs[fmt].extend(paths)
+            continue
+
+        # Full-song percussion mode (drums only)
+        if args.full_song:
+            song_beat = fw.generate_song(
+                genre=genre,
+                year=args.year,
+                swing=args.swing,
+                profile=profile,
+            )
+            logger.info(f"Generated full song: {song_beat.total_bars} bars, {len(song_beat.sections)} sections")
+
+            output_dir = str(Path(args.output) / f"{genre}_{args.year}")
+            outputs = fw.export_song(
+                song_beat=song_beat,
+                output_dir=output_dir,
+                prefix=f"{genre}_{args.year}_",
+                export_midi=True,
+                export_wav=not args.no_wav,
+                export_json=not args.no_json,
+            )
+
+            for fmt, paths in outputs.items():
+                all_outputs[fmt].extend(paths)
+            continue
 
         # Generate beats
         beats = fw.generate(

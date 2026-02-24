@@ -125,9 +125,18 @@ class SpotifyCollector:
                     sid = track.get("spotify_id")
                     if sid and sid in id_to_features:
                         f = id_to_features[sid]
-                        track["bpm"]        = round(f.get("tempo", 0))
-                        track["time_sig"]   = f.get("time_signature", 4)
-                        track["danceability"] = f.get("danceability", 0)
-                        track["energy"]     = f.get("energy", 0)
+                        track["bpm"]              = round(f.get("tempo", 0))
+                        track["time_sig"]         = f.get("time_signature", 4)
+                        track["danceability"]     = f.get("danceability", 0)
+                        track["energy"]           = f.get("energy", 0)
+                        track["key"]              = f.get("key")        # 0-11 pitch class
+                        track["mode"]             = f.get("mode")       # 0=minor, 1=major
+                        track["valence"]          = f.get("valence")    # 0.0-1.0
+                        track["loudness"]         = f.get("loudness")   # dB
+                        track["acousticness"]     = f.get("acousticness")
+                        track["instrumentalness"] = f.get("instrumentalness")
+                        track["speechiness"]      = f.get("speechiness")
+                        track["liveness"]         = f.get("liveness")
+                        track["duration_ms"]      = f.get("duration_ms")
             except Exception as e:
                 logger.warning(f"Audio features fetch failed: {e}")

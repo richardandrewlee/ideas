@@ -138,7 +138,7 @@ class StatisticalGenerator:
                     )
 
                     if in_fill_zone:
-                        prob = self._apply_fill_logic(inst, step_in_bar, prob)
+                        prob = self._apply_fill_logic(inst, step_in_bar, prob, profile.steps_per_bar)
 
                     if self.rng.random() < prob:
                         vel = self._sample_velocity(profile, inst)
@@ -207,21 +207,15 @@ class StatisticalGenerator:
         instrument: str,
         step_in_bar: int,
         base_prob: float,
+        steps_per_bar: int = 16,
     ) -> float:
-        """Modify hit probabilities in the fill zone."""
-        fill_step = step_in_bar - (self.steps_per_bar_ref - 4) if hasattr(self, "steps_per_bar_ref") else 0
-
+        """Modify hit probabilities in the fill zone (last 4 steps of a fill bar)."""
         if instrument in ("kick", "hihat_closed"):
             return base_prob * 0.3   # Suppress normal elements
         elif instrument in ("tom_low", "tom_mid", "tom_high"):
             return min(1.0, base_prob + 0.6)  # Boost toms
         elif instrument == "snare":
             return min(1.0, base_prob + 0.4)  # More snare hits
-        elif instrument == "crash" and step_in_bar == self.steps_per_bar_ref - 1 if hasattr(self, "steps_per_bar_ref") else True:
+        elif instrument == "crash" and (step_in_bar == steps_per_bar - 1):
             return 0.8   # Crash on fill resolution
         return base_prob
-
-    # Patch for fill logic reference
-    @property
-    def steps_per_bar_ref(self) -> int:
-        return 16
