@@ -2,7 +2,11 @@
   "permissions": {
     "allow": [
       "Bash(python3:*)",
-      "Bash(ls:*)"
+      "Bash(ls:*)",
+      "Bash(pip3 install:*)",
+      "Bash(source:*)",
+      "Bash(pip install:*)",
+      "Bash(.venv/bin/python3:*)"
     ],
     "additionalDirectories": [
       "/Users/richardlee/Documents/GitHub/ideas/music/research/beat_framework",
