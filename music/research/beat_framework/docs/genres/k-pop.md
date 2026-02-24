@@ -4,7 +4,7 @@
 
 ## Stats
 
-- **Highest ranked**: #273 "Dynamite" — BTS (2020)
+- **Highest ranked**: #273 ["Dynamite"](https://www.youtube.com/results?search_query=BTS+Dynamite) — BTS (2020)
 - **Top artists**: BTS (1)
 - **BPM range**: 114–114 BPM (1 songs with known BPM)
 - **Decade spread**: 2020s: 1
@@ -16,4 +16,4 @@
 
 ### 2020
 
-1. **"Dynamite"** — BTS *(#273)* [114 BPM]
+1. **["Dynamite"](https://www.youtube.com/results?search_query=BTS+Dynamite)** — BTS *(#273)* [114 BPM]
